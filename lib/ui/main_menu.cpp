@@ -8,9 +8,9 @@ MainMenu::MainMenu(){
 }
 
 void MainMenu::eventHandler(lv_event_t * event){
-  if (event->code == LV_EVENT_PRESSED) {
-    lv_obj_t * btn = lv_event_get_target(event);
-    lv_obj_t * label = lv_obj_get_child(btn, NULL);
+  if (lv_event_get_code(event) == LV_EVENT_PRESSED) {
+    lv_obj_t * btn = static_cast<lv_obj_t *>(lv_event_get_target(event));
+    lv_obj_t * label = lv_obj_get_child(btn, 0);
     const char * text = lv_label_get_text(label);
     Settings* settings = Settings::getInstance();
 
