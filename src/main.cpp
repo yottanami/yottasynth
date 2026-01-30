@@ -13,6 +13,8 @@
 // define play_mode
 PlayMode play_mode;
 
+extern "C" void _reboot_Teensyduino_(void);
+
 // XPT2046_Touchscreen
 #define CS_PIN  5
 #define TIRQ_PIN  4
@@ -131,6 +133,15 @@ void loop()
   // Poll MIDI from USB host and dispatch to Synth
   play_mode.loop();
 
+  if (Serial.available()) {
+    const int c = Serial.read();
+    if (c == '!') {
+      Serial.println("Rebooting to bootloader...");
+      Serial.flush();
+      delay(10);
+      _reboot_Teensyduino_();
+    }
+  }
 
   // int channel = 0;
   // digitalWrite(A5, bitRead(channel, 0));
