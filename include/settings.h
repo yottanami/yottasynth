@@ -2,9 +2,11 @@
 #define SETTINGS_H
 
 enum class Mode {
+  MENU,
   SYNTHESIZER,
   SEQUENCER,
-  ARPEGGIATOR
+  ARPEGGIATOR,
+  INPUT_TEST
 };
 
 class Settings {
@@ -16,7 +18,7 @@ private:
   static Settings* instance;
 
   // Current mode setting
-  Mode mode;
+  Mode mode = Mode::MENU;
 
 public:
   // Static method to access the single instance
@@ -40,13 +42,7 @@ public:
     mode = newMode;
   }
 
-  // Destructor to clean up resources
-  ~Settings() {
-    delete instance;
-  }
+  ~Settings() = default;
 };
-
-// Initialize the static instance variable to nullptr
-Settings* Settings::instance = nullptr;
 
 #endif

@@ -1,8 +1,12 @@
 # include "Arduino.h"
 #include <lvgl.h>
 # include "main_menu.h"
+#include "input_test_page.h"
 #include "settings.h"
 
+namespace {
+constexpr bool kStartInInputTest = true;
+}
 
 MainMenu::MainMenu(){
 }
@@ -20,6 +24,8 @@ void MainMenu::eventHandler(lv_event_t * event){
       settings->setMode(Mode::ARPEGGIATOR);
     } else if(strcmp(text, "SEQUENCER") == 0){
       settings->setMode(Mode::SEQUENCER);
+    } else if(strcmp(text, "INPUT TEST") == 0){
+      settings->setMode(Mode::INPUT_TEST);
     }                   
   }
 }
@@ -50,6 +56,8 @@ void MainMenu::render(){
   cont = lv_menu_cont_create(sequencer_page);
   label = lv_label_create(cont);
   lv_label_set_text(label, "SEQUENCER PAGE");
+
+  lv_obj_t * input_test_page_obj = input_test_page.createPage(menu);
     
   /*Create a main page*/
   lv_obj_t * main_page = lv_menu_page_create(menu, NULL);
@@ -72,7 +80,18 @@ void MainMenu::render(){
   lv_menu_set_load_page_event(menu, cont, sequencer_page);
   lv_obj_add_event_cb(cont, eventHandler, LV_EVENT_PRESSED, NULL);
 
-  lv_menu_set_page(menu, main_page);
+  cont = lv_menu_cont_create(main_page);
+  label = lv_label_create(cont);
+  lv_label_set_text(label, "INPUT TEST");
+  lv_menu_set_load_page_event(menu, cont, input_test_page_obj);
+  lv_obj_add_event_cb(cont, eventHandler, LV_EVENT_PRESSED, NULL);
+
+  if (kStartInInputTest) {
+    Settings::getInstance()->setMode(Mode::INPUT_TEST);
+    lv_menu_set_page(menu, input_test_page_obj);
+  } else {
+    lv_menu_set_page(menu, main_page);
+  }
      
 }
 
