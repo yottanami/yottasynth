@@ -120,18 +120,18 @@ void setup()
   
   Serial.println( "Setup done" );
 
-  //pinMode(10, OUTPUT);
-   //pinMode(20, OUTPUT);
-   // pinMode(21, OUTPUT);
-  // pinMode(22, OUTPUT);
-  // pinMode(A9, INPUT);
+  pinMode(10, OUTPUT);
+  pinMode(20, OUTPUT);
+  pinMode(21, OUTPUT);
+  pinMode(22, OUTPUT);
+  pinMode(A9, INPUT);
 
 }
 
 void loop()
 {
   // Poll MIDI from USB host and dispatch to Synth
-  play_mode.loop();
+  //play_mode.loop();
 
   if (Serial.available()) {
     const int c = Serial.read();
@@ -143,22 +143,22 @@ void loop()
     }
   }
 
-  // int channel = 0;
-  // digitalWrite(A5, bitRead(channel, 0));
-  // digitalWrite(A6, bitRead(channel, 1));
-  // digitalWrite(A7, bitRead(channel, 2));
-  // digitalWrite(A8, bitRead(channel, 3));
+  int channel = 1;
+  digitalWrite(A5, bitRead(channel, 0));
+  digitalWrite(A6, bitRead(channel, 1));
+  digitalWrite(A7, bitRead(channel, 2));
+  digitalWrite(A8, bitRead(channel, 3));
 
-  //  int potValue = analogRead(A9);
+  int potValue = analogRead(A9);
 
   //   Print the value to the serial monitor
-  // Serial.print("Channel ");
-  // Serial.print(channel);
-  // Serial.print(": ");
-  // Serial.println(potValue);
+  Serial.print("Channel ");
+  Serial.print(channel);
+  Serial.print(": ");
+  Serial.println(potValue);
 
   // Update synth internals (LFO, envelopes, etc.)
-  synth.loop();
+  //synth.loop();
   
   // Let the GUI do its work
   lv_task_handler();
