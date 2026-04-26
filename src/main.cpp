@@ -29,6 +29,47 @@ TFT_eSPI tft = TFT_eSPI(TFT_HOR_RES, TFT_VER_RES);
 #define DRAW_BUF_SIZE (TFT_HOR_RES * TFT_VER_RES / 10 * (LV_COLOR_DEPTH / 8))
 uint32_t draw_buf[DRAW_BUF_SIZE / 4];
 
+namespace {
+
+constexpr int kMuxSelectPins[] = {14, 15, 16, 17};
+constexpr int kMuxSignalPin = 22;
+constexpr int kMuxChannelCount = 8;
+constexpr unsigned long kPotPrintIntervalMs = 200;
+constexpr int kPotSamplesPerChannel = 4;
+constexpr bool kEnableAudioInit = false;
+
+bool touchIrqActive()
+{
+  return digitalRead(TIRQ_PIN) == LOW;
+}
+
+void selectMuxChannel(const int channel)
+{
+  for (int bit = 0; bit < 4; ++bit) {
+    digitalWrite(kMuxSelectPins[bit], bitRead(channel, bit));
+  }
+}
+
+int readMuxChannel(const int channel)
+{
+  selectMuxChannel(channel);
+  delayMicroseconds(50);
+
+  // Discard the first conversion after switching the mux so the ADC
+  // sample-and-hold capacitor can settle on the new channel.
+  analogRead(kMuxSignalPin);
+  delayMicroseconds(10);
+
+  int total = 0;
+  for (int sample = 0; sample < kPotSamplesPerChannel; ++sample) {
+    total += analogRead(kMuxSignalPin);
+  }
+
+  return total / kPotSamplesPerChannel;
+}
+
+}  // namespace
+
 // initialize Synth and store it is lead_synth variable
 Synth synth(&lead_waveform1, &lead_waveform2, &lead_pink, &lead_filter, &lead_envelope);
 
@@ -58,25 +99,28 @@ void my_disp_flush( lv_display_t *disp, const lv_area_t *area, uint8_t * px_map)
 
 void my_touchpad_read( lv_indev_t * indev, lv_indev_data_t * data ) 
 {
-  bool touched = ts.touched();
-  TS_Point p = ts.getPoint();
-  
-  int x = map(p.y, 400, 3829, 1, TFT_VER_RES);
-  int y = map(p.x, 540, 3756, 1, TFT_HOR_RES);
+  LV_UNUSED(indev);
 
-  
-  if(!touched) {    
-    data->state = LV_INDEV_STATE_RELEASED;
-  } else {
-    data->state = LV_INDEV_STATE_PRESSED;
+  data->state = LV_INDEV_STATE_RELEASED;
 
-    Serial.print("X: ");
-    Serial.print(x);
-
-  
-    data->point.x = x;
-    data->point.y = y;
+  // The XPT2046 T_IRQ line is active-low and needs a pull-up.
+  // When the screen is disconnected, this keeps the pin from floating
+  // and avoids bogus touch reads flooding the serial monitor.
+  if (!touchIrqActive()) {
+    return;
   }
+
+  if (!ts.touched()) {
+    return;
+  }
+
+  const TS_Point p = ts.getPoint();
+  const int x = constrain(map(p.y, 400, 3829, 1, TFT_VER_RES), 0, TFT_VER_RES - 1);
+  const int y = constrain(map(p.x, 540, 3756, 1, TFT_HOR_RES), 0, TFT_HOR_RES - 1);
+
+  data->state = LV_INDEV_STATE_PRESSED;
+  data->point.x = x;
+  data->point.y = y;
 }
 
 void setup()
@@ -88,6 +132,7 @@ void setup()
   tft.begin(); /* TFT init */
   tft.setRotation(3); /* Landscape orientation */
   ts.begin();
+  pinMode(TIRQ_PIN, INPUT_PULLUP);
   delay(100);
   //tft.setRotation(0);
   ts.setRotation(0);
@@ -113,18 +158,25 @@ void setup()
  
   main_menu.render();
 
-  setupAudio();    
+  if (kEnableAudioInit) {
+    setupAudio();
+  } else {
+    Serial.println("Audio init disabled for mux debug.");
+  }
     
   synth.setup();
   play_mode.setup();
   
   Serial.println( "Setup done" );
 
-  pinMode(10, OUTPUT);
-  pinMode(20, OUTPUT);
-  pinMode(21, OUTPUT);
-  pinMode(22, OUTPUT);
-  pinMode(A9, INPUT);
+  analogReadResolution(10);
+  analogReadAveraging(8);
+
+  for (const int pin : kMuxSelectPins) {
+    pinMode(pin, OUTPUT);
+  }
+  pinMode(kMuxSignalPin, INPUT);
+  selectMuxChannel(0);
 
 }
 
@@ -143,19 +195,23 @@ void loop()
     }
   }
 
-  int channel = 1;
-  digitalWrite(A5, bitRead(channel, 0));
-  digitalWrite(A6, bitRead(channel, 1));
-  digitalWrite(A7, bitRead(channel, 2));
-  digitalWrite(A8, bitRead(channel, 3));
+  static unsigned long lastPotPrintMs = 0;
+  const unsigned long now = millis();
+  if (now - lastPotPrintMs >= kPotPrintIntervalMs) {
+    lastPotPrintMs = now;
 
-  int potValue = analogRead(A9);
+    for (int channel = 0; channel < kMuxChannelCount; ++channel) {
+      if (channel > 0) {
+        Serial.print(" | ");
+      }
 
-  //   Print the value to the serial monitor
-  Serial.print("Channel ");
-  Serial.print(channel);
-  Serial.print(": ");
-  Serial.println(potValue);
+      Serial.print("C");
+      Serial.print(channel);
+      Serial.print(": ");
+      Serial.print(readMuxChannel(channel));
+    }
+    Serial.println();
+  }
 
   // Update synth internals (LFO, envelopes, etc.)
   //synth.loop();

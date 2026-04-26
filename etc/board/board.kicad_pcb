@@ -4423,30 +4423,6 @@
 		(layer "Edge.Cuts")
 		(uuid "0f8c47a9-f13e-4578-8be5-48d95c33b375")
 	)
-	(gr_text "yottanami.com"
-		(at 121.5 39 0)
-		(layer "F.SilkS")
-		(uuid "5239123a-8520-4be0-892d-67b0d8e86699")
-		(effects
-			(font
-				(size 1 1)
-				(thickness 0.1)
-			)
-			(justify left bottom)
-		)
-	)
-	(gr_text "YottaSynth"
-		(at 97.5 38 0)
-		(layer "F.SilkS")
-		(uuid "b645691f-e8c0-4a4f-bcbb-dacea18ca74f")
-		(effects
-			(font
-				(size 3 3)
-				(thickness 0.5)
-			)
-			(justify left bottom)
-		)
-	)
 	(segment
 		(start 163.35 93.74)
 		(end 158.61 93.74)
