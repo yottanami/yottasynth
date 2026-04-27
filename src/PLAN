@@ -1,0 +1,42 @@
+
+
+
+
+• In the code, the multiplexer is wired as:
+
+  - S0..S3 select pins: 14, 15, 16, 17 in src/main.cpp:34
+  - SIG analog pin: 22 in src/main.cpp:35
+  - It only reads 8 channels right now via kMuxChannelCount = 8 in src/main.cpp:36
+
+  The selection logic uses kMuxSelectPins[0] as bit 0, so effectively:
+
+  - S0 = 14
+  - S1 = 15
+  - S2 = 16
+  - S3 = 17
+
+
+SIG analog pin: 22 in src/main.cpp:35
+  - It only reads 8 channels right now via kMuxChannelCount = 8 in src/main.cpp:36
+
+  The selection logic uses kMuxSelectPins[0] as bit 0, so effectively:
+
+  - S0 = 14
+  - S1 = 15
+  - S2 = 16
+  - S3 = 17
+
+
+
+The device right now has 5 potensiometer knobs. first one is C2 secnd is C4 and next is C1 and next is C5 and next is C0
+  It also has a joystick that I only want to use the push button of it. (for example as confirm/ok button)
+  It also has a touch screen
+
+  Based on the availabe inputs and example synths that I have in Agents document
+  Plan to implement the synthesizer features with a good user experiments
+  it also should have an arpegiator and a sequencer with tempo select
+  the selectable items on screen should be big enough to easily touchable
+  Also there should be enough information on screen with beutiful colorful ui using existing graphical library.
+
+  Based on these information try to plan to implement it and feel free to define related tasks/steps and document everything in
+  agents file or in a proper file

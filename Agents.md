@@ -119,7 +119,6 @@ From `platformio.ini` and `src/main.cpp`:
 From `etc/board/board.kicad_pcb` plus the current mux wiring override:
 
 - `RV1`..`RV5` are five potentiometers
-- their wipers go into mux channels `C0`..`C4`
 - the mux is a `74HC4067` breakout (`U2`)
 - current mux select pins:
   - `S0 -> 14`
@@ -131,6 +130,14 @@ From `etc/board/board.kicad_pcb` plus the current mux wiring override:
 
 The runtime mux/test code uses the same live mapping in `src/main.cpp` and `include/input_test_page.h`.
 
+The currently confirmed front-panel order used by firmware is:
+
+- knob 1 -> `C2`
+- knob 2 -> `C4`
+- knob 3 -> `C1`
+- knob 4 -> `C5`
+- knob 5 -> `C0`
+
 There is also a 5-pin connector `J1`:
 
 - pin 1 = `GND`
@@ -139,7 +146,12 @@ There is also a 5-pin connector `J1`:
 - pin 4 = mux `C6`
 - pin 5 = mux `C7`
 
-Based on the hardware description you gave and the pin count, this is very likely intended for the joystick module. That is an inference from the board wiring and project description; it is not labeled as "joystick" in the schematic text.
+The current firmware treats:
+
+- `C7` as the joystick push button
+- joystick `X/Y` as unused in v1
+
+That `C7` button mapping is based on the current hardware confirmation, not only on the schematic inference.
 
 ## Firmware Stack
 
@@ -517,6 +529,34 @@ This is not the biggest blocker for the synth, but it should be fixed before the
 
 ## Recommended Product Direction for This Repo
 
+## Implemented V1 Runtime
+
+The active firmware now implements a first integrated instrument shell:
+
+- a **mono synth** voice with patch state routed into the Teensy audio graph
+- a **touch-first LVGL shell** with six pages:
+  - `PLAY`
+  - `OSC / MIX`
+  - `FILTER / AMP`
+  - `MOD`
+  - `ARPEGGIATOR`
+  - `SEQUENCER`
+- **five context-sensitive knobs** that remap per page using the confirmed channel order above
+- **joystick push button** used as `OK / Confirm` for destructive actions such as sequence clear
+- **internal tempo clock**
+- **arpeggiator**
+- **16-step monophonic sequencer**
+- **live MIDI record into the sequencer**
+- an **input test overlay** for service/debug rather than booting into diagnostics by default
+
+Important current implementation details:
+
+- transport is currently **internal clock only**
+- external MIDI note input is handled through `USBHost_t36`
+- pitch bend is routed into the active synth
+- LVGL timing now uses elapsed `millis()` rather than a fixed fake tick increment
+- the LVGL draw buffer is placed in `DMAMEM` to keep RAM1 usage within Teensy 4.1 limits
+
 ### UX model
 
 Use the touch screen as a **page-based panel**, not as a generic menu system.
@@ -546,23 +586,22 @@ That is a better fit than jumping directly into Summit-level complexity.
 
 ### Best next engineering steps
 
-1. Use mux scanning on `14/15/16/17 -> 22` to map `RV1..RV5` into the synth path.
-2. Confirm joystick wiring on `J1` and read its channels through the same mux.
-3. Replace placeholder menu pages with one real synth edit page.
-4. Reuse the older CC parameter map as the first internal parameter model.
-5. Reconnect pitch bend, CC, and modulation handling in the active synth path.
-6. Add one first effect, likely delay, before building the sequencer.
-7. Build arp before full sequencer, because the current code already receives MIDI clock/start/stop.
+1. Validate the real hardware feel of the new control map on device and retune thresholds or smoothing if any knob chatters.
+2. Add preset storage for patch + sequence state.
+3. Add one first effect, likely delay, on top of the current mono path.
+4. Improve sequencer editing with ties, rests, and per-step motion.
+5. Add external MIDI clock sync if needed after the internal-clock workflow feels stable.
 
 ## Bottom Line
 
-Today this repo is **not yet a finished synth UI instrument**. It is currently:
+Today this repo is an **early but usable synth UI instrument**. It currently provides:
 
 - a Teensy 4.1 firmware base
-- with working TFT + touch
-- working USB host MIDI note input
-- working mono synth voice
-- a much larger unfinished audio graph
-- and hardware prepared for pots + joystick that are not integrated yet
+- working TFT + touch
+- USB host MIDI note input
+- a working mono synth voice with on-screen parameter editing
+- page-based knob mapping
+- internal-clocked arp and 16-step sequencer
+- a larger audio graph that still has room for future layering and effects
 
 The best commercial reference to guide the next implementation steps is **Korg minilogue xd**.

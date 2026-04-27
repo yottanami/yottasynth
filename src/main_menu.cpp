@@ -1,98 +1,632 @@
-# include "Arduino.h"
-#include <lvgl.h>
-# include "main_menu.h"
+#include "main_menu.h"
+
+#include <math.h>
+#include <stdio.h>
+
 #include "input_test_page.h"
+#include "performance_engine.h"
 #include "settings.h"
+#include "synth.h"
+
+extern Synth synth;
 
 namespace {
-constexpr bool kStartInInputTest = true;
+MainMenu *g_main_menu = nullptr;
+AppState &state = AppState::instance();
+
+constexpr PageId kPages[6] = {
+    PageId::PLAY, PageId::OSC_MIX, PageId::FILTER_AMP,
+    PageId::MOD,  PageId::ARP,     PageId::SEQ,
+};
+
+constexpr const char *kTabTitles[6] = {
+    "PLAY", "OSC", "FILT", "MOD", "ARP", "SEQ",
+};
+
+constexpr uint32_t kPageColors[6] = {
+    0x2F855A, 0x0EA5A4, 0xD97706, 0x2563EB, 0x9333EA, 0xDC2626,
+};
+
+float clampUnit(float value) {
+  if (value < 0.0f) {
+    return 0.0f;
+  }
+  if (value > 1.0f) {
+    return 1.0f;
+  }
+  return value;
 }
 
-MainMenu::MainMenu(){
+uint8_t discreteIndex(float normalized, uint8_t option_count) {
+  normalized = clampUnit(normalized);
+  const uint8_t max_index = option_count > 0 ? option_count - 1 : 0;
+  return min<uint8_t>(static_cast<uint8_t>(normalized * option_count), max_index);
 }
 
-void MainMenu::eventHandler(lv_event_t * event){
-  if (lv_event_get_code(event) == LV_EVENT_PRESSED) {
-    lv_obj_t * btn = static_cast<lv_obj_t *>(lv_event_get_target(event));
-    lv_obj_t * label = lv_obj_get_child(btn, 0);
-    const char * text = lv_label_get_text(label);
-    Settings* settings = Settings::getInstance();
+uint16_t bpmFromNormalized(float normalized) {
+  return static_cast<uint16_t>(60 + (clampUnit(normalized) * 140.0f));
+}
 
-    if(strcmp(text, "SYNTHESIZER") == 0){
-      settings->setMode(Mode::SYNTHESIZER);
-    } else if(strcmp(text, "ARPEGGIATOR") == 0){
-      settings->setMode(Mode::ARPEGGIATOR);
-    } else if(strcmp(text, "SEQUENCER") == 0){
-      settings->setMode(Mode::SEQUENCER);
-    } else if(strcmp(text, "INPUT TEST") == 0){
-      settings->setMode(Mode::INPUT_TEST);
-    }                   
+const char *noteName(uint8_t note) {
+  static char buffer[8];
+  static const char *kNames[12] = {"C", "C#", "D", "D#", "E", "F",
+                                   "F#", "G", "G#", "A", "A#", "B"};
+  snprintf(buffer, sizeof(buffer), "%s%u", kNames[note % 12U], (note / 12U) - 1U);
+  return buffer;
+}
+
+void appendMidiStatus(char *buffer, size_t size) {
+  const MidiStatus &midi = state.midi;
+  const size_t used = strlen(buffer);
+  if (used >= size) {
+    return;
+  }
+
+  if (!midi.connected) {
+    snprintf(buffer + used, size - used, "  MIDI:WAIT");
+    return;
+  }
+
+  if (midi.note_recent) {
+    snprintf(buffer + used, size - used, "  MIDI:%s v%u", noteName(midi.last_note),
+             midi.last_velocity);
+    return;
+  }
+
+  snprintf(buffer + used, size - used, "  MIDI:%04X:%04X", midi.vendor_id, midi.product_id);
+}
+
+void appendAudioStatus(char *buffer, size_t size) {
+  const size_t used = strlen(buffer);
+  if (used >= size) {
+    return;
+  }
+
+  const AudioStatus &audio = state.audio;
+  snprintf(buffer + used, size - used, " AUD:%s%s", audio.codec_ready ? "OK" : "FAIL",
+           audio.self_test_active ? "*" : "");
+}
+
+const char *yesNo(bool value) {
+  return value ? "ON" : "OFF";
+}
+
+void formatPotValue(char *buffer, size_t size, uint8_t index) {
+  switch (state.ui.page) {
+    case PageId::PLAY:
+      if (index == 0) snprintf(buffer, size, "%u Hz", static_cast<unsigned>(state.patch.cutoff * 10000.0f));
+      if (index == 1) snprintf(buffer, size, "%.1f", 0.7f + (state.patch.resonance * 4.3f));
+      if (index == 2) snprintf(buffer, size, "%u%%", static_cast<unsigned>(state.patch.glide * 100.0f));
+      if (index == 3) snprintf(buffer, size, "%u%%", state.arp.gate);
+      if (index == 4) snprintf(buffer, size, "%u BPM", state.transport.bpm);
+      break;
+    case PageId::OSC_MIX:
+      if (index == 0) snprintf(buffer, size, "%u%%", static_cast<unsigned>(state.patch.osc1_mix * 100.0f));
+      if (index == 1) snprintf(buffer, size, "%u%%", static_cast<unsigned>(state.patch.osc2_mix * 100.0f));
+      if (index == 2) snprintf(buffer, size, "%u%%", static_cast<unsigned>(state.patch.noise_mix * 100.0f));
+      if (index == 3) snprintf(buffer, size, "%+d st", (state.patch.octave_index - 2) * 12);
+      if (index == 4) snprintf(buffer, size, "%.2f", 0.95f + ((state.patch.detune - 0.5f) * 0.10f));
+      break;
+    case PageId::FILTER_AMP:
+      if (index == 0) snprintf(buffer, size, "%u%%", static_cast<unsigned>(state.patch.cutoff * 100.0f));
+      if (index == 1) snprintf(buffer, size, "%u%%", static_cast<unsigned>(state.patch.resonance * 100.0f));
+      if (index == 2) snprintf(buffer, size, "%ums", static_cast<unsigned>(5.0f + state.patch.attack * 2500.0f));
+      if (index == 3) snprintf(buffer, size, "%ums", static_cast<unsigned>(20.0f + state.patch.decay * 3000.0f));
+      if (index == 4) snprintf(buffer, size, "%ums", static_cast<unsigned>(30.0f + state.patch.release * 3200.0f));
+      break;
+    case PageId::MOD:
+      if (index == 0) snprintf(buffer, size, "%.1f Hz", 0.15f + (state.patch.lfo_rate * 10.0f));
+      if (index == 1) snprintf(buffer, size, "%u%%", static_cast<unsigned>(state.patch.lfo_depth * 100.0f));
+      if (index == 2) snprintf(buffer, size, "%u%%", static_cast<unsigned>(state.patch.glide * 100.0f));
+      if (index == 3) snprintf(buffer, size, "%.1f st", 1.0f + (state.patch.bend_range * 11.0f));
+      if (index == 4) snprintf(buffer, size, "%s", lfoTargetLabel(state.patch.lfo_target));
+      break;
+    case PageId::ARP:
+      if (index == 0) snprintf(buffer, size, "%u BPM", state.transport.bpm);
+      if (index == 1) snprintf(buffer, size, "x%u", state.arp.division);
+      if (index == 2) snprintf(buffer, size, "%u%%", state.arp.gate);
+      if (index == 3) snprintf(buffer, size, "%u oct", state.arp.octave_range);
+      if (index == 4) snprintf(buffer, size, "%s", arpModeLabel(state.arp.mode));
+      break;
+    case PageId::SEQ:
+      if (index == 0) snprintf(buffer, size, "%u BPM", state.transport.bpm);
+      if (index == 1) snprintf(buffer, size, "%u steps", state.sequencer.length);
+      if (index == 2) snprintf(buffer, size, "%u%%", static_cast<unsigned>(state.transport.swing * 100.0f));
+      if (index == 3) snprintf(buffer, size, "%s", noteName(state.sequencer.steps[state.sequencer.selected_step].note));
+      if (index == 4) snprintf(buffer, size, "%u%%", state.sequencer.steps[state.sequencer.selected_step].gate);
+      break;
   }
 }
 
-void MainMenu::render(){
-  /*Create a menu object*/
-  lv_obj_t * menu = lv_menu_create(lv_scr_act());
-  lv_obj_set_size(menu, lv_disp_get_hor_res(NULL), lv_disp_get_ver_res(NULL));
-  lv_obj_center(menu);
+const char *potName(uint8_t index) {
+  static const char *kPlayNames[5] = {"CUT", "RES", "GLIDE", "A-GATE", "BPM"};
+  static const char *kOscNames[5] = {"OSC1", "OSC2", "NOISE", "OCT", "DETUNE"};
+  static const char *kFilterNames[5] = {"CUT", "RES", "ATT", "DEC", "REL"};
+  static const char *kModNames[5] = {"RATE", "DEPTH", "GLIDE", "BEND", "TARGET"};
+  static const char *kArpNames[5] = {"BPM", "DIV", "GATE", "OCT", "MODE"};
+  static const char *kSeqNames[5] = {"BPM", "LEN", "SWING", "NOTE", "GATE"};
 
-  lv_obj_t * cont;
-  lv_obj_t * label;
+  switch (state.ui.page) {
+    case PageId::PLAY:
+      return kPlayNames[index];
+    case PageId::OSC_MIX:
+      return kOscNames[index];
+    case PageId::FILTER_AMP:
+      return kFilterNames[index];
+    case PageId::MOD:
+      return kModNames[index];
+    case PageId::ARP:
+      return kArpNames[index];
+    case PageId::SEQ:
+      return kSeqNames[index];
+    default:
+      return "";
+  }
+}
+}
 
-  lv_obj_t * synth_page = lv_menu_page_create(menu, NULL);
+MainMenu::MainMenu() {
+  g_main_menu = this;
+}
 
-  cont = lv_menu_cont_create(synth_page);
-  label = lv_label_create(cont);
-  lv_label_set_text(label, "SYNTH PAGE");
+void MainMenu::render() {
+  if (root_ != nullptr) {
+    return;
+  }
 
-  lv_obj_t * arpeggiator_page = lv_menu_page_create(menu, NULL);
+  root_ = lv_obj_create(lv_scr_act());
+  lv_obj_remove_style_all(root_);
+  lv_obj_set_size(root_, lv_pct(100), lv_pct(100));
+  lv_obj_set_style_bg_color(root_, lv_color_hex(0x09111F), 0);
 
-  cont = lv_menu_cont_create(arpeggiator_page);
-  label = lv_label_create(cont);
-  lv_label_set_text(label, "ARPEGGIATOR PAGE");
+  lv_obj_t *top_bar = lv_obj_create(root_);
+  lv_obj_set_pos(top_bar, 0, 0);
+  lv_obj_set_size(top_bar, 320, 46);
+  lv_obj_set_style_radius(top_bar, 0, 0);
+  lv_obj_set_style_border_width(top_bar, 0, 0);
+  lv_obj_set_style_bg_color(top_bar, lv_color_hex(0x111C2E), 0);
+  lv_obj_set_style_pad_all(top_bar, 0, 0);
 
-  lv_obj_t * sequencer_page = lv_menu_page_create(menu, NULL);
+  status_title_label_ = lv_label_create(top_bar);
+  lv_obj_set_style_text_font(status_title_label_, LV_FONT_DEFAULT, 0);
+  lv_obj_set_style_text_color(status_title_label_, lv_color_white(), 0);
+  lv_obj_set_width(status_title_label_, 210);
+  lv_label_set_long_mode(status_title_label_, LV_LABEL_LONG_CLIP);
+  lv_obj_align(status_title_label_, LV_ALIGN_TOP_LEFT, 10, 4);
 
-  cont = lv_menu_cont_create(sequencer_page);
-  label = lv_label_create(cont);
-  lv_label_set_text(label, "SEQUENCER PAGE");
+  status_label_ = lv_label_create(top_bar);
+  lv_obj_set_style_text_font(status_label_, LV_FONT_DEFAULT, 0);
+  lv_obj_set_style_text_color(status_label_, lv_color_hex(0xD5E1F5), 0);
+  lv_obj_set_width(status_label_, 254);
+  lv_label_set_long_mode(status_label_, LV_LABEL_LONG_CLIP);
+  lv_obj_align(status_label_, LV_ALIGN_BOTTOM_LEFT, 10, -4);
 
-  lv_obj_t * input_test_page_obj = input_test_page.createPage(menu);
-    
-  /*Create a main page*/
-  lv_obj_t * main_page = lv_menu_page_create(menu, NULL);
+  diag_button_ = lv_button_create(top_bar);
+  lv_obj_set_size(diag_button_, 46, 24);
+  lv_obj_align(diag_button_, LV_ALIGN_RIGHT_MID, 0, 0);
+  lv_obj_add_event_cb(diag_button_, diagEventHandler, LV_EVENT_CLICKED, nullptr);
+  diag_button_label_ = lv_label_create(diag_button_);
+  lv_obj_center(diag_button_label_);
 
-  cont = lv_menu_cont_create(main_page);
-  label = lv_label_create(cont);
-  lv_label_set_text(label, "SYNTHESIZER");
-  lv_menu_set_load_page_event(menu, cont, synth_page);
-  lv_obj_add_event_cb(cont, eventHandler, LV_EVENT_PRESSED, NULL);
+  content_panel_ = lv_obj_create(root_);
+  lv_obj_set_pos(content_panel_, 0, 46);
+  lv_obj_set_size(content_panel_, 320, 150);
+  lv_obj_set_style_radius(content_panel_, 0, 0);
+  lv_obj_set_style_border_width(content_panel_, 0, 0);
+  lv_obj_set_style_bg_color(content_panel_, lv_color_hex(0x0D1628), 0);
 
-  cont = lv_menu_cont_create(main_page);
-  label = lv_label_create(cont);
-  lv_label_set_text(label, "ARPEGGIATOR");
-  lv_menu_set_load_page_event(menu, cont, arpeggiator_page);
-  lv_obj_add_event_cb(cont, eventHandler, LV_EVENT_PRESSED, NULL);
+  input_test_panel_ = lv_obj_create(root_);
+  lv_obj_set_pos(input_test_panel_, 0, 46);
+  lv_obj_set_size(input_test_panel_, 320, 150);
+  lv_obj_set_style_radius(input_test_panel_, 0, 0);
+  lv_obj_set_style_border_width(input_test_panel_, 0, 0);
+  lv_obj_set_style_bg_color(input_test_panel_, lv_color_hex(0x0D1628), 0);
+  input_test_page.createPage(input_test_panel_);
 
-  cont = lv_menu_cont_create(main_page);
-  label = lv_label_create(cont);
-  lv_label_set_text(label, "SEQUENCER");
-  lv_menu_set_load_page_event(menu, cont, sequencer_page);
-  lv_obj_add_event_cb(cont, eventHandler, LV_EVENT_PRESSED, NULL);
+  pot_row_ = lv_obj_create(content_panel_);
+  lv_obj_set_pos(pot_row_, 8, 8);
+  lv_obj_set_size(pot_row_, 304, 66);
+  lv_obj_set_style_bg_opa(pot_row_, LV_OPA_TRANSP, 0);
+  lv_obj_set_style_border_width(pot_row_, 0, 0);
+  lv_obj_set_style_pad_all(pot_row_, 0, 0);
 
-  cont = lv_menu_cont_create(main_page);
-  label = lv_label_create(cont);
-  lv_label_set_text(label, "INPUT TEST");
-  lv_menu_set_load_page_event(menu, cont, input_test_page_obj);
-  lv_obj_add_event_cb(cont, eventHandler, LV_EVENT_PRESSED, NULL);
+  for (uint8_t index = 0; index < kPotCardCount; ++index) {
+    pot_cards_[index] = lv_obj_create(pot_row_);
+    lv_obj_set_size(pot_cards_[index], 56, 66);
+    lv_obj_set_pos(pot_cards_[index], index * 61, 0);
+    lv_obj_set_style_border_width(pot_cards_[index], 0, 0);
+    lv_obj_set_style_radius(pot_cards_[index], 12, 0);
+    lv_obj_set_style_pad_all(pot_cards_[index], 4, 0);
 
-  if (kStartInInputTest) {
-    Settings::getInstance()->setMode(Mode::INPUT_TEST);
-    lv_menu_set_page(menu, input_test_page_obj);
+    pot_name_labels_[index] = lv_label_create(pot_cards_[index]);
+    lv_obj_set_style_text_font(pot_name_labels_[index], LV_FONT_DEFAULT, 0);
+    lv_obj_set_width(pot_name_labels_[index], 48);
+    lv_label_set_long_mode(pot_name_labels_[index], LV_LABEL_LONG_CLIP);
+    lv_obj_set_style_text_align(pot_name_labels_[index], LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_align(pot_name_labels_[index], LV_ALIGN_TOP_MID, 0, 2);
+
+    pot_value_labels_[index] = lv_label_create(pot_cards_[index]);
+    lv_obj_set_style_text_font(pot_value_labels_[index], LV_FONT_DEFAULT, 0);
+    lv_obj_set_width(pot_value_labels_[index], 48);
+    lv_label_set_long_mode(pot_value_labels_[index], LV_LABEL_LONG_CLIP);
+    lv_obj_set_style_text_align(pot_value_labels_[index], LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_align(pot_value_labels_[index], LV_ALIGN_BOTTOM_MID, 0, -8);
+  }
+
+  seq_info_label_ = lv_label_create(content_panel_);
+  lv_obj_set_pos(seq_info_label_, 10, 10);
+  lv_obj_set_width(seq_info_label_, 300);
+  lv_label_set_long_mode(seq_info_label_, LV_LABEL_LONG_CLIP);
+  lv_obj_set_style_text_font(seq_info_label_, LV_FONT_DEFAULT, 0);
+  lv_obj_set_style_text_color(seq_info_label_, lv_color_hex(0xD5E1F5), 0);
+
+  for (uint8_t index = 0; index < kActionCount; ++index) {
+    action_buttons_[index] = lv_button_create(content_panel_);
+    lv_obj_set_size(action_buttons_[index], 145, 26);
+    lv_obj_set_pos(action_buttons_[index], (index % 2U) ? 161 : 14, index < 2U ? 82 : 114);
+    lv_obj_add_event_cb(action_buttons_[index], actionEventHandler, LV_EVENT_CLICKED,
+                        reinterpret_cast<void *>(static_cast<uintptr_t>(index)));
+    action_labels_[index] = lv_label_create(action_buttons_[index]);
+    lv_obj_set_width(action_labels_[index], 130);
+    lv_label_set_long_mode(action_labels_[index], LV_LABEL_LONG_CLIP);
+    lv_obj_set_style_text_align(action_labels_[index], LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_center(action_labels_[index]);
+  }
+
+  for (uint8_t index = 0; index < kSeqButtonCount; ++index) {
+    seq_step_buttons_[index] = lv_button_create(content_panel_);
+    const int col = index % 4;
+    const int row = index / 4;
+    lv_obj_set_size(seq_step_buttons_[index], 72, 34);
+    lv_obj_set_pos(seq_step_buttons_[index], 10 + col * 76, 42 + row * 38);
+    lv_obj_add_event_cb(seq_step_buttons_[index], seqStepEventHandler, LV_EVENT_CLICKED,
+                        reinterpret_cast<void *>(static_cast<uintptr_t>(index)));
+    seq_step_labels_[index] = lv_label_create(seq_step_buttons_[index]);
+    lv_obj_set_width(seq_step_labels_[index], 64);
+    lv_label_set_long_mode(seq_step_labels_[index], LV_LABEL_LONG_CLIP);
+    lv_obj_set_style_text_align(seq_step_labels_[index], LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_center(seq_step_labels_[index]);
+  }
+
+  lv_obj_t *tab_bar = lv_obj_create(root_);
+  lv_obj_set_pos(tab_bar, 0, 196);
+  lv_obj_set_size(tab_bar, 320, 44);
+  lv_obj_set_style_radius(tab_bar, 0, 0);
+  lv_obj_set_style_border_width(tab_bar, 0, 0);
+  lv_obj_set_style_bg_color(tab_bar, lv_color_hex(0x111C2E), 0);
+
+  for (uint8_t index = 0; index < kTabCount; ++index) {
+    tab_buttons_[index] = lv_button_create(tab_bar);
+    lv_obj_set_size(tab_buttons_[index], 48, 32);
+    lv_obj_set_pos(tab_buttons_[index], 4 + index * 52, 6);
+    lv_obj_add_event_cb(tab_buttons_[index], tabEventHandler, LV_EVENT_CLICKED,
+                        reinterpret_cast<void *>(static_cast<uintptr_t>(index)));
+    tab_labels_[index] = lv_label_create(tab_buttons_[index]);
+    lv_label_set_text(tab_labels_[index], kTabTitles[index]);
+    lv_obj_center(tab_labels_[index]);
+  }
+
+  setPage(PageId::PLAY);
+}
+
+void MainMenu::loop() {
+  if (state.ui.dirty) {
+    refresh();
+    state.ui.dirty = false;
+  }
+}
+
+void MainMenu::handlePotChange(uint8_t index, float value) {
+  value = clampUnit(value);
+
+  switch (state.ui.page) {
+    case PageId::PLAY:
+      if (index == 0) state.patch.cutoff = value;
+      if (index == 1) state.patch.resonance = value;
+      if (index == 2) state.patch.glide = value;
+      if (index == 3) state.arp.gate = static_cast<uint8_t>(40 + value * 50.0f);
+      if (index == 4) state.transport.bpm = bpmFromNormalized(value);
+      break;
+    case PageId::OSC_MIX:
+      if (index == 0) state.patch.osc1_mix = value;
+      if (index == 1) state.patch.osc2_mix = value;
+      if (index == 2) state.patch.noise_mix = value;
+      if (index == 3) state.patch.octave_index = discreteIndex(value, 5);
+      if (index == 4) state.patch.detune = value;
+      break;
+    case PageId::FILTER_AMP:
+      if (index == 0) state.patch.cutoff = value;
+      if (index == 1) state.patch.resonance = value;
+      if (index == 2) state.patch.attack = value;
+      if (index == 3) state.patch.decay = value;
+      if (index == 4) state.patch.release = value;
+      break;
+    case PageId::MOD:
+      if (index == 0) state.patch.lfo_rate = value;
+      if (index == 1) state.patch.lfo_depth = value;
+      if (index == 2) state.patch.glide = value;
+      if (index == 3) state.patch.bend_range = value;
+      if (index == 4) state.patch.lfo_target = static_cast<LfoTarget>(discreteIndex(value, 3));
+      break;
+    case PageId::ARP:
+      if (index == 0) state.transport.bpm = bpmFromNormalized(value);
+      if (index == 1) state.arp.division = 1 + discreteIndex(value, 4);
+      if (index == 2) state.arp.gate = static_cast<uint8_t>(30 + value * 65.0f);
+      if (index == 3) state.arp.octave_range = 1 + discreteIndex(value, 3);
+      if (index == 4) state.arp.mode = static_cast<ArpMode>(discreteIndex(value, 4));
+      break;
+    case PageId::SEQ:
+      if (index == 0) state.transport.bpm = bpmFromNormalized(value);
+      if (index == 1) state.sequencer.length = 1 + discreteIndex(value, 16);
+      if (index == 2) state.transport.swing = value * 0.9f;
+      if (index == 3) setSelectedStepValue(true, value);
+      if (index == 4) setSelectedStepValue(false, value);
+      break;
+  }
+
+  state.markDirty();
+}
+
+void MainMenu::handleOkPress() {
+  if (!state.ui.confirm_clear_sequence) {
+    return;
+  }
+
+  for (SequenceStep &step : state.sequencer.steps) {
+    step.active = false;
+    step.tie = false;
+    step.note = 60;
+    step.gate = 75;
+  }
+
+  state.ui.confirm_clear_sequence = false;
+  state.markDirty();
+}
+
+void MainMenu::tabEventHandler(lv_event_t *event) {
+  if (lv_event_get_code(event) != LV_EVENT_CLICKED || g_main_menu == nullptr) {
+    return;
+  }
+
+  const uint8_t tab_index =
+      static_cast<uint8_t>(reinterpret_cast<uintptr_t>(lv_event_get_user_data(event)));
+  g_main_menu->setPage(kPages[tab_index]);
+}
+
+void MainMenu::actionEventHandler(lv_event_t *event) {
+  if (lv_event_get_code(event) != LV_EVENT_CLICKED || g_main_menu == nullptr) {
+    return;
+  }
+
+  const uint8_t action_index =
+      static_cast<uint8_t>(reinterpret_cast<uintptr_t>(lv_event_get_user_data(event)));
+  g_main_menu->handleAction(action_index);
+}
+
+void MainMenu::seqStepEventHandler(lv_event_t *event) {
+  if (lv_event_get_code(event) != LV_EVENT_CLICKED || g_main_menu == nullptr) {
+    return;
+  }
+
+  const uint8_t local_index =
+      static_cast<uint8_t>(reinterpret_cast<uintptr_t>(lv_event_get_user_data(event)));
+  const uint8_t step_index = state.sequencer.visible_bank * 8U + local_index;
+  if (step_index >= 16U) {
+    return;
+  }
+
+  if (state.sequencer.selected_step == step_index) {
+    state.sequencer.steps[step_index].active = !state.sequencer.steps[step_index].active;
   } else {
-    lv_menu_set_page(menu, main_page);
+    state.sequencer.selected_step = step_index;
   }
-     
+  state.markDirty();
 }
 
-MainMenu main_menu = MainMenu();
+void MainMenu::diagEventHandler(lv_event_t *event) {
+  if (lv_event_get_code(event) != LV_EVENT_CLICKED || g_main_menu == nullptr) {
+    return;
+  }
+
+  state.setInputTestVisible(!state.ui.show_input_test);
+  g_main_menu->updateMode();
+}
+
+void MainMenu::setPage(PageId page) {
+  state.setPage(page);
+  updateMode();
+}
+
+void MainMenu::updateMode() {
+  Settings::getInstance()->setMode(state.currentMode());
+}
+
+void MainMenu::refresh() {
+  refreshStatusBar();
+  refreshTabs();
+  refreshPotCards();
+  refreshActionButtons();
+  refreshSequencerButtons();
+  refreshVisibility();
+}
+
+void MainMenu::refreshStatusBar() {
+  lv_label_set_text(status_title_label_, pageTitle(state.ui.page));
+
+  char status_text[96];
+  snprintf(status_text, sizeof(status_text), "%uBPM %s A:%s S:%s",
+           state.transport.bpm, state.transport.running ? "RUN" : "STOP",
+           yesNo(state.arp.enabled), yesNo(state.sequencer.enabled));
+  appendAudioStatus(status_text, sizeof(status_text));
+  appendMidiStatus(status_text, sizeof(status_text));
+  lv_label_set_text(status_label_, status_text);
+  lv_label_set_text(diag_button_label_, state.ui.show_input_test ? "UI" : "I/O");
+}
+
+void MainMenu::refreshTabs() {
+  const uint32_t accent = kPageColors[static_cast<uint8_t>(state.ui.page)];
+  for (uint8_t index = 0; index < kTabCount; ++index) {
+    const bool active = kPages[index] == state.ui.page;
+    lv_obj_set_style_bg_color(tab_buttons_[index],
+                              active ? lv_color_hex(accent) : lv_color_hex(0x1A2740), 0);
+    lv_obj_set_style_text_color(tab_labels_[index],
+                                active ? lv_color_white() : lv_color_hex(0xC2D2EA), 0);
+  }
+}
+
+void MainMenu::refreshPotCards() {
+  const uint32_t accent = kPageColors[static_cast<uint8_t>(state.ui.page)];
+  for (uint8_t index = 0; index < kPotCardCount; ++index) {
+    lv_label_set_text(pot_name_labels_[index], potName(index));
+    char buffer[24];
+    formatPotValue(buffer, sizeof(buffer), index);
+    lv_label_set_text(pot_value_labels_[index], buffer);
+    lv_obj_set_style_bg_color(pot_cards_[index], lv_color_hex(accent), 0);
+    lv_obj_set_style_bg_opa(pot_cards_[index], LV_OPA_30, 0);
+    lv_obj_set_style_text_color(pot_name_labels_[index], lv_color_hex(0xE5EDF8), 0);
+    lv_obj_set_style_text_color(pot_value_labels_[index], lv_color_white(), 0);
+  }
+}
+
+void MainMenu::refreshActionButtons() {
+  const uint32_t accent = kPageColors[static_cast<uint8_t>(state.ui.page)];
+  static const char *kLabels[6][4] = {
+      {"RUN/STOP", "ARP TOG", "TEST", "PANIC"},
+      {"OCT -", "OCT +", "DET 0", "NOISE 0"},
+      {"SUS -", "SUS +", "SNAP", "LONG"},
+      {"LFO OFF", "FILT LFO", "PITCH LFO", "DEPTH 0"},
+      {"ENABLE", "LATCH", "RUN/STOP", "CLR HELD"},
+      {"RUN/STOP", "REC ARM", "BANK", "CLEAR"},
+  };
+  const uint8_t page_index = static_cast<uint8_t>(state.ui.page);
+  for (uint8_t index = 0; index < kActionCount; ++index) {
+    lv_label_set_text(action_labels_[index], kLabels[page_index][index]);
+    lv_obj_set_style_bg_color(action_buttons_[index], lv_color_hex(accent), 0);
+    lv_obj_set_style_bg_opa(action_buttons_[index], LV_OPA_40, 0);
+  }
+
+  if (state.ui.page == PageId::SEQ && state.ui.confirm_clear_sequence) {
+    lv_label_set_text(action_labels_[3], "WAIT OK");
+  }
+  if (state.ui.page == PageId::PLAY && state.audio.self_test_active) {
+    lv_label_set_text(action_labels_[2], "TESTING");
+  }
+}
+
+void MainMenu::refreshSequencerButtons() {
+  char info_text[128];
+  snprintf(info_text, sizeof(info_text), "STEP %02u %s G%u B%u",
+           state.sequencer.selected_step + 1U,
+           noteName(state.sequencer.steps[state.sequencer.selected_step].note),
+           state.sequencer.steps[state.sequencer.selected_step].gate,
+           state.sequencer.visible_bank + 1U);
+  lv_label_set_text(seq_info_label_, info_text);
+
+  for (uint8_t index = 0; index < kSeqButtonCount; ++index) {
+    const uint8_t step_index = state.sequencer.visible_bank * 8U + index;
+    const bool selected = step_index == state.sequencer.selected_step;
+    const bool active = state.sequencer.steps[step_index].active;
+    const bool playing = step_index == state.sequencer.playhead && state.transport.running;
+
+    char label[24];
+    snprintf(label, sizeof(label), "%02u %s", step_index + 1U,
+             active ? noteName(state.sequencer.steps[step_index].note) : "--");
+    lv_label_set_text(seq_step_labels_[index], label);
+
+    uint32_t color = active ? 0xC2410C : 0x1A2740;
+    if (selected) color = 0x2563EB;
+    if (playing) color = 0x16A34A;
+    lv_obj_set_style_bg_color(seq_step_buttons_[index], lv_color_hex(color), 0);
+  }
+}
+
+void MainMenu::refreshVisibility() {
+  const bool show_seq = state.ui.page == PageId::SEQ && !state.ui.show_input_test;
+  const bool show_input = state.ui.show_input_test;
+
+  if (show_input) {
+    lv_obj_add_flag(content_panel_, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_clear_flag(input_test_panel_, LV_OBJ_FLAG_HIDDEN);
+    return;
+  }
+
+  lv_obj_clear_flag(content_panel_, LV_OBJ_FLAG_HIDDEN);
+  lv_obj_add_flag(input_test_panel_, LV_OBJ_FLAG_HIDDEN);
+
+  if (show_seq) {
+    lv_obj_add_flag(pot_row_, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_clear_flag(seq_info_label_, LV_OBJ_FLAG_HIDDEN);
+    for (uint8_t index = 0; index < kSeqButtonCount; ++index) {
+      lv_obj_clear_flag(seq_step_buttons_[index], LV_OBJ_FLAG_HIDDEN);
+    }
+  } else {
+    lv_obj_clear_flag(pot_row_, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(seq_info_label_, LV_OBJ_FLAG_HIDDEN);
+    for (uint8_t index = 0; index < kSeqButtonCount; ++index) {
+      lv_obj_add_flag(seq_step_buttons_[index], LV_OBJ_FLAG_HIDDEN);
+    }
+  }
+}
+
+void MainMenu::handleAction(uint8_t action_index) {
+  switch (state.ui.page) {
+    case PageId::PLAY:
+      if (action_index == 0) state.transport.running = !state.transport.running;
+      if (action_index == 1) state.arp.enabled = !state.arp.enabled;
+      if (action_index == 2) synth.startSelfTest();
+      if (action_index == 3) performance_engine.stopTransport();
+      break;
+    case PageId::OSC_MIX:
+      if (action_index == 0 && state.patch.octave_index > 0) --state.patch.octave_index;
+      if (action_index == 1 && state.patch.octave_index < 4) ++state.patch.octave_index;
+      if (action_index == 2) state.patch.detune = 0.5f;
+      if (action_index == 3) state.patch.noise_mix = 0.0f;
+      break;
+    case PageId::FILTER_AMP:
+      if (action_index == 0) state.patch.sustain = max(0.0f, state.patch.sustain - 0.05f);
+      if (action_index == 1) state.patch.sustain = min(1.0f, state.patch.sustain + 0.05f);
+      if (action_index == 2) {
+        state.patch.attack = 0.01f;
+        state.patch.decay = 0.08f;
+        state.patch.release = 0.10f;
+      }
+      if (action_index == 3) {
+        state.patch.attack = 0.35f;
+        state.patch.decay = 0.45f;
+        state.patch.release = 0.55f;
+      }
+      break;
+    case PageId::MOD:
+      if (action_index == 0) state.patch.lfo_target = LfoTarget::OFF;
+      if (action_index == 1) state.patch.lfo_target = LfoTarget::FILTER;
+      if (action_index == 2) state.patch.lfo_target = LfoTarget::PITCH;
+      if (action_index == 3) state.patch.lfo_depth = 0.0f;
+      break;
+    case PageId::ARP:
+      if (action_index == 0) state.arp.enabled = !state.arp.enabled;
+      if (action_index == 1) state.arp.latch = !state.arp.latch;
+      if (action_index == 2) state.transport.running = !state.transport.running;
+      if (action_index == 3) performance_engine.clearHeldNotes();
+      break;
+    case PageId::SEQ:
+      if (action_index == 0) state.transport.running = !state.transport.running;
+      if (action_index == 1) state.sequencer.record_armed = !state.sequencer.record_armed;
+      if (action_index == 2) state.sequencer.visible_bank ^= 1U;
+      if (action_index == 3) state.ui.confirm_clear_sequence = !state.ui.confirm_clear_sequence;
+      break;
+  }
+
+  state.markDirty();
+}
+
+void MainMenu::setSelectedStepValue(bool set_note, float normalized) {
+  SequenceStep &step = state.sequencer.steps[state.sequencer.selected_step];
+  if (set_note) {
+    step.note = static_cast<uint8_t>(36 + roundf(normalized * 48.0f));
+    step.active = true;
+  } else {
+    step.gate = static_cast<uint8_t>(20 + normalized * 75.0f);
+  }
+}
+
+MainMenu main_menu;

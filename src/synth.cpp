@@ -1,269 +1,342 @@
 #include "synth.h"
+
+#include <math.h>
+
 #include "audio_setup.h"
 
+namespace {
+constexpr float kMidiNoteFrequencies[128] = {
+    8.176f,   8.662f,   9.177f,   9.723f,   10.301f,  10.913f,  11.562f,
+    12.250f,  12.978f,  13.750f,  14.568f,  15.434f,  16.352f,  17.324f,
+    18.354f,  19.445f,  20.602f,  21.827f,  23.125f,  24.500f,  25.957f,
+    27.500f,  29.135f,  30.868f,  32.703f,  34.648f,  36.708f,  38.891f,
+    41.203f,  43.654f,  46.249f,  48.999f,  51.913f,  55.000f,  58.270f,
+    61.735f,  65.406f,  69.296f,  73.416f,  77.782f,  82.407f,  87.307f,
+    92.499f,  97.999f,  103.826f, 110.000f, 116.541f, 123.471f, 130.813f,
+    138.591f, 146.832f, 155.563f, 164.814f, 174.614f, 184.997f, 195.998f,
+    207.652f, 220.000f, 233.082f, 246.942f, 261.626f, 277.183f, 293.665f,
+    311.127f, 329.628f, 349.228f, 369.994f, 391.995f, 415.305f, 440.000f,
+    466.164f, 493.883f, 523.251f, 554.365f, 587.330f, 622.254f, 659.255f,
+    698.456f, 739.989f, 783.991f, 830.609f, 880.000f, 932.328f, 987.767f,
+    1046.502f, 1108.731f, 1174.659f, 1244.508f, 1318.510f, 1396.913f,
+    1479.978f, 1567.982f, 1661.219f, 1760.000f, 1864.655f, 1975.533f,
+    2093.005f, 2217.461f, 2349.318f, 2489.016f, 2637.020f, 2793.826f,
+    2959.955f, 3135.963f, 3322.438f, 3520.000f, 3729.310f, 3951.066f,
+    4186.009f, 4434.922f, 4698.636f, 4978.032f, 5274.041f, 5587.652f,
+    5919.911f, 6271.927f, 6644.875f, 7040.000f, 7458.620f, 7902.133f,
+    8372.018f, 8869.844f, 9397.273f, 9956.063f, 10548.080f, 11175.300f,
+    11839.820f, 12543.850f};
 
-// Constants
-const byte BUFFER = 8;
-const float noteFreqs[128] = {8.176, 8.662, 9.177, 9.723, 10.301, 10.913, 11.562, 12.25, 12.978, 13.75, 14.568, 15.434, 16.352, 17.324, 18.354, 19.445, 20.602, 21.827, 23.125, 24.5, 25.957, 27.5, 29.135, 30.868, 32.703, 34.648, 36.708, 38.891, 41.203, 43.654, 46.249, 48.999, 51.913, 55, 58.27, 61.735, 65.406, 69.296, 73.416, 77.782, 82.407, 87.307, 92.499, 97.999, 103.826, 110, 116.541, 123.471, 130.813, 138.591, 146.832, 155.563, 164.814, 174.614, 184.997, 195.998, 207.652, 220, 233.082, 246.942, 261.626, 277.183, 293.665, 311.127, 329.628, 349.228, 369.994, 391.995, 415.305, 440, 466.164, 493.883, 523.251, 554.365, 587.33, 622.254, 659.255, 698.456, 739.989, 783.991, 830.609, 880, 932.328, 987.767, 1046.502, 1108.731, 1174.659, 1244.508, 1318.51, 1396.913, 1479.978, 1567.982, 1661.219, 1760, 1864.655, 1975.533, 2093.005, 2217.461, 2349.318, 2489.016, 2637.02, 2793.826, 2959.955, 3135.963, 3322.438, 3520, 3729.31, 3951.066, 4186.009, 4434.922, 4698.636, 4978.032, 5274.041, 5587.652, 5919.911,  6271.927, 6644.875, 7040, 7458.62, 7902.133, 8372.018, 8869.844, 9397.273, 9956.063, 10548.08, 11175.3, 11839.82, 12543.85};
-const float DIV127 = (1.0 / 127.0);
+float clampUnit(float value) {
+  if (value < 0.0f) {
+    return 0.0f;
+  }
+  if (value > 1.0f) {
+    return 1.0f;
+  }
+  return value;
+}
+}
 
-
-// TODO: check if could be defined as const
-float bendFactor = 1.0;
-float LFOpitch = 1.0;
-byte velocity = 127;
-float FILfactor = 1;
-byte globalNote = 0;
-int FILfreq =  10000;
-
-
-// Adjustable parameters
-int octave = 1;
-float detuneFactor = 1.0;
-float LFOdepth = 0.0;
-byte LFOmodeSelect = 0;
-unsigned int LFOspeed = 2000;
-// waveforms types
-
-
-
-Synth::Synth(AudioSynthWaveform* waveform1,
-	     AudioSynthWaveform* waveform2,
-	     AudioSynthNoisePink* pink,
-	     AudioFilterStateVariable* filter,
-	     AudioEffectEnvelope* envelope) {
-  this->waveform1 = waveform1;
-  this->waveform2 = waveform2;
-  this->pink = pink;
-  this->filter = filter;
-  this->envelope = envelope;
+Synth::Synth(AudioSynthWaveform *waveform1,
+             AudioSynthWaveform *waveform2,
+             AudioSynthNoisePink *pink,
+             AudioFilterStateVariable *filter,
+             AudioEffectEnvelope *envelope)
+    : waveform1_(waveform1),
+      waveform2_(waveform2),
+      pink_(pink),
+      envelope_(envelope),
+      filter_(filter) {
 }
 
 void Synth::setup() {
-  waveform1->begin(WAVEFORM_SAWTOOTH);
-  waveform1->pulseWidth(0.15);
+  waveform1_->begin(WAVEFORM_SAWTOOTH);
+  waveform1_->pulseWidth(0.50f);
+  waveform2_->begin(WAVEFORM_SAWTOOTH);
+  waveform2_->pulseWidth(0.35f);
 
-  waveform2->begin(WAVEFORM_SINE);
-  waveform2->pulseWidth(0.15);
+  lead_mixer.gain(0, patch_.osc1_mix);
+  lead_mixer.gain(1, patch_.osc2_mix);
+  lead_mixer.gain(2, patch_.noise_mix);
 
-  // TODO:: move these lines to leac synth
-  lead_envelope.attack(10);
-  lead_envelope.decay(50);
-  lead_envelope.sustain(0.7);
-  lead_envelope.release(200);
-  
+  filter_->octaveControl(4.0f);
+  filter_->resonance(0.9f);
+  envelope_->attack(10.0f);
+  envelope_->decay(100.0f);
+  envelope_->sustain(0.7f);
+  envelope_->release(250.0f);
+
+  current_note_ = 60;
+  current_velocity_ = 100;
+  current_freq1_ = noteToFrequency(current_note_);
+  current_freq2_ = current_freq1_;
+  target_freq1_ = current_freq1_;
+  target_freq2_ = current_freq2_;
+  waveform1_->frequency(current_freq1_);
+  waveform2_->frequency(current_freq2_);
+  applyPatch(patch_);
+  last_update_us_ = micros();
 }
 
 void Synth::loop() {
-  LFOupdate(false, LFOmodeSelect, FILfactor, LFOdepth);
-}
-
-void Synth::oscPlay(byte note) {
-  waveform1->frequency(noteFreqs[note] * bendFactor);
-  waveform2->frequency(noteFreqs[note + octave] * detuneFactor * bendFactor * LFOpitch);
-  float velo = (velocity * DIV127);
-  waveform1->amplitude(velo);
-  waveform2->amplitude(velo);
-  pink->amplitude(0);
-
-  envelope->noteOn();
-}
-
-void Synth::oscStop() {
-  envelope->noteOff();
-}
-
-void Synth::oscSet() {
-  waveform1->frequency(noteFreqs[globalNote] * bendFactor);
- waveform2->frequency(noteFreqs[globalNote + octave] * detuneFactor * bendFactor * LFOpitch);  
-}
-
-void Synth::onNoteOn(byte channel, byte note, byte vel){
-  if(note > 23 && note < 108){
-    globalNote = note;
-    velocity = vel;
-    keyBuff(note, true);
-    LFOupdate(true, LFOmodeSelect, FILfactor, LFOdepth);
-  }
-}
-
-void Synth::onNoteOff(byte channel, byte note, byte velocity){
-  if(note > 23 && note < 108){
-    keyBuff(note, false);
-  }
-}
-
-void Synth::keyBuff(byte note, bool playNote){
-  static byte buff[BUFFER];
-  // How many notes are in the buffer
-  static byte buffSize = 0;
-
-  // Add note to buffer
-  if(playNote == true && buffSize < BUFFER){
-    oscPlay(note);
-    buff[buffSize] = note;
-    buffSize++;
+  if (self_test_active_) {
+    if (millis() - self_test_started_ms_ >= 1200UL) {
+      stopSelfTest();
+    }
     return;
   }
-  // Remove note from buffer
-  else if(playNote == false && buffSize != 0){
-    for(byte found = 0; found < buffSize; found++){
-      if(buff[found] == note){
-	for(byte i = found; i < (buffSize - 1); i++){
-	  buff[i] = buff[i + 1];
-	}
-	buffSize--;
-	buff[buffSize] = 255;
-	if (buffSize != 0){
-	  oscPlay(buff[buffSize - 1]);
-	  return;	
-	}else {    
-	  oscStop();
-	  return;
-	}
-      }
-    }
+
+  const unsigned long now = micros();
+  float delta_seconds = 0.0f;
+  if (last_update_us_ != 0) {
+    const unsigned long delta_us = now - last_update_us_;
+    delta_seconds = static_cast<float>(delta_us) / 1000000.0f;
+  }
+  last_update_us_ = now;
+
+  updateModulation();
+
+  if (note_count_ == 0) {
+    return;
+  }
+
+  const float glide_amount = clampUnit(patch_.glide);
+  if (glide_amount <= 0.01f) {
+    current_freq1_ = target_freq1_;
+    current_freq2_ = target_freq2_;
+  } else {
+    const float response = 12.0f - (glide_amount * 11.5f);
+    const float alpha = clampUnit(delta_seconds * response);
+    current_freq1_ += (target_freq1_ - current_freq1_) * alpha;
+    current_freq2_ += (target_freq2_ - current_freq2_) * alpha;
+  }
+
+  waveform1_->frequency(current_freq1_);
+  waveform2_->frequency(current_freq2_);
+}
+
+void Synth::applyPatch(const PatchState &patch) {
+  patch_ = patch;
+
+  if (self_test_active_) {
+    return;
+  }
+
+  lead_mixer.gain(0, clampUnit(patch_.osc1_mix));
+  lead_mixer.gain(1, clampUnit(patch_.osc2_mix));
+  lead_mixer.gain(2, clampUnit(patch_.noise_mix));
+
+  pink_->amplitude(clampUnit(patch_.noise_mix));
+  filter_->frequency(normalizedToFilterHz(patch_.cutoff + filter_lfo_value_));
+  filter_->resonance(0.7f + (clampUnit(patch_.resonance) * 4.3f));
+
+  envelope_->attack(5.0f + (clampUnit(patch_.attack) * 2500.0f));
+  envelope_->decay(20.0f + (clampUnit(patch_.decay) * 3000.0f));
+  envelope_->sustain(clampUnit(patch_.sustain));
+  envelope_->release(30.0f + (clampUnit(patch_.release) * 3200.0f));
+
+  if (note_count_ > 0) {
+    refreshVoices(false);
   }
 }
 
-void Synth::LFOupdate(bool retrig, byte mode, float FILtop, float FILbottom) {
-  static float LFO = 0;
-  static unsigned long LFOtime = 0;
-  static bool LFOdirection = false;
-  unsigned long currentMicros = micros();
-  static bool LFOstop = false;
-  static float LFOrange = 0;
-  static byte oldMode = 0;
-  static bool retriggered = false;
+void Synth::setPitchBend(int pitch) {
+  const float bend_norm = static_cast<float>(pitch) / 8192.0f;
+  const float bend_range_semitones = 1.0f + (clampUnit(patch_.bend_range) * 11.0f);
+  const float semitone_offset = bend_norm * bend_range_semitones;
+  pitch_bend_factor_ = powf(2.0f, semitone_offset / 12.0f);
 
-  if (retrig == true) retriggered = true;
+  if (note_count_ > 0) {
+    refreshVoices(false);
+  }
+}
 
+void Synth::noteOn(byte note, byte velocity) {
+  if (note < 24 || note > 107) {
+    return;
+  }
 
-  if (currentMicros - LFOtime >= LFOspeed) {
-    LFOtime = currentMicros;
+  current_velocity_ = velocity;
 
-    if (mode != oldMode) {
-      if (mode == 0 || mode == 8) {
-        LFOpitch = 1;
-	oscSet();
-        filter->frequency(FILfreq);
+  for (byte index = 0; index < note_count_; ++index) {
+    if (note_buffer_[index] == note) {
+      for (byte move = index; move + 1 < note_count_; ++move) {
+        note_buffer_[move] = note_buffer_[move + 1];
       }
-      else if (mode >= 1 || mode <= 7) {
-        LFOpitch = 1;
-        oscSet();
-      }
-      else if (mode >= 9 || mode <= 13) {
-        filter->frequency(FILfreq);
-      }
-      oldMode = mode;
-    }
-
-    LFOrange = FILtop - FILbottom;
-    if (LFOrange < 0) LFOrange = 0;
-
-    // LFO Modes
-    switch (mode) {
-
-    case 0: //Filter OFF
-      return;
+      --note_count_;
       break;
-    case 1: //Filter FREE
-      filter->frequency(10000 * ((LFOrange * LFO) + LFOdepth));
-      break;
-    case 2: //Filter DOWN
-      if (retriggered == true) {
-	LFOdirection = true;
-	LFO = 1.0;
-      }
-      filter->frequency(10000 * ((LFOrange * LFO) + LFOdepth));
-      break;
-    case 3: //Filter UP
-      if (retriggered == true) {
-	LFOdirection = false;
-	LFO = 0;
-      }
-      filter->frequency(10000 * ((LFOrange * LFO) + LFOdepth));
-      break;
-    case 4: //Filter 1-DN
-      if (retriggered == true) {
-	LFOstop = false;
-	LFOdirection = true;
-	LFO = 1.0;
-      }
-      if (LFOstop == false) filter->frequency(10000 * ((LFOrange * LFO) + LFOdepth));
-      break;
-    case 5: //Filter 1-UP
-      if (retriggered == true) {
-	LFOstop = false;
-	LFOdirection = false;
-	LFO = 0;
-      }
-      if (LFOstop == false) filter->frequency(10000 * ((LFOrange * LFO) + LFOdepth));
-      break;
-    case 8: //Pitch OFF
-      return;
-      break;
-    case 9: //Pitch FREE
-      LFOpitch = (LFO * LFOdepth) + 1;
-      oscSet();
-      break;
-    case 10: //Pitch DOWN
-      if (retriggered == true) {
-	LFOdirection = true;
-	LFO = 1.0;
-      }
-      LFOpitch = (LFO * LFOdepth) + 1;
-      oscSet();
-      break;
-    case 11: //Pitch UP
-      if (retriggered == true) {
-	LFOdirection = false;
-	LFO = 0;
-      }
-      LFOpitch = (LFO * LFOdepth) + 1;
-      oscSet();
-      break;
-    case 12: //Pitch 1-DN
-      if (retriggered == true) {
-	LFOstop = false;
-	LFOdirection = true;
-	LFO = 1.0;
-      }
-      if (LFOstop == false) {
-	LFOpitch = (LFO * LFOdepth) + 1;
-	oscSet();
-      }
-      break;
-    case 13: //Pitch 1-UP
-      if (retriggered == true) {
-	LFOstop = false;
-	LFOdirection = false;
-	LFO = 0;
-      }
-      if (LFOstop == false) {
-	LFOpitch = (LFO * LFOdepth) + 1;
-	oscSet();
-      }
-      break;
-    }
-
-    retriggered = false;
-
-    // Update LFO
-    if (LFOdirection == false) { //UP
-      LFO = (LFO + 0.01);
-      if (LFO >= 1) {
-        LFOdirection = true;
-        LFOstop = true;
-      }
-    }
-
-    if (LFOdirection == true) { //Down
-      LFO = (LFO - 0.01);
-      if (LFO <= 0) {
-        LFOdirection = false;
-        LFOstop = true;
-      }
     }
   }
+
+  if (note_count_ < kBufferSize) {
+    note_buffer_[note_count_] = note;
+    ++note_count_;
+  }
+
+  current_note_ = note_buffer_[note_count_ - 1];
+  retriggerCurrentNote();
+}
+
+void Synth::noteOff(byte note) {
+  if (note_count_ == 0) {
+    return;
+  }
+
+  for (byte index = 0; index < note_count_; ++index) {
+    if (note_buffer_[index] == note) {
+      for (byte move = index; move + 1 < note_count_; ++move) {
+        note_buffer_[move] = note_buffer_[move + 1];
+      }
+      --note_count_;
+      break;
+    }
+  }
+
+  if (note_count_ == 0) {
+    envelope_->noteOff();
+    return;
+  }
+
+  current_note_ = note_buffer_[note_count_ - 1];
+  refreshVoices(true);
+}
+
+void Synth::allNotesOff() {
+  note_count_ = 0;
+  envelope_->noteOff();
+}
+
+void Synth::startSelfTest() {
+  self_test_active_ = true;
+  self_test_started_ms_ = millis();
+  note_count_ = 0;
+
+  waveform1_->begin(WAVEFORM_SINE);
+  waveform2_->begin(WAVEFORM_SINE);
+  waveform1_->frequency(440.0f);
+  waveform2_->frequency(660.0f);
+  waveform1_->amplitude(0.75f);
+  waveform2_->amplitude(0.18f);
+  pink_->amplitude(0.0f);
+
+  lead_mixer.gain(0, 0.90f);
+  lead_mixer.gain(1, 0.25f);
+  lead_mixer.gain(2, 0.0f);
+  filter_->frequency(5000.0f);
+  filter_->resonance(0.8f);
+  envelope_->attack(5.0f);
+  envelope_->decay(10.0f);
+  envelope_->sustain(1.0f);
+  envelope_->release(40.0f);
+  envelope_->noteOn();
+}
+
+void Synth::stopSelfTest() {
+  if (!self_test_active_) {
+    return;
+  }
+
+  self_test_active_ = false;
+  envelope_->noteOff();
+  waveform1_->amplitude(0.0f);
+  waveform2_->amplitude(0.0f);
+  pink_->amplitude(0.0f);
+
+  waveform1_->begin(WAVEFORM_SAWTOOTH);
+  waveform2_->begin(WAVEFORM_SAWTOOTH);
+  waveform1_->pulseWidth(0.50f);
+  waveform2_->pulseWidth(0.35f);
+  applyPatch(patch_);
+}
+
+bool Synth::isSelfTestActive() const {
+  return self_test_active_;
+}
+
+void Synth::retriggerCurrentNote() {
+  refreshVoices(true);
+  const float amplitude = 0.20f + (static_cast<float>(current_velocity_) / 127.0f) * 0.80f;
+  waveform1_->amplitude(amplitude);
+  waveform2_->amplitude(amplitude * 0.95f);
+  pink_->amplitude(clampUnit(patch_.noise_mix) * amplitude);
+  envelope_->noteOn();
+}
+
+void Synth::refreshVoices(bool immediate) {
+  target_freq1_ = noteWithBendToFrequency(current_note_);
+  target_freq2_ = noteWithBendToFrequency(current_note_ + (patch_.octave_index - 2) * 12);
+  const float detune_multiplier = 1.0f + ((clampUnit(patch_.detune) - 0.5f) * 0.10f);
+  target_freq2_ *= detune_multiplier * pitchLfoMultiplier();
+
+  if (patch_.lfo_target == LfoTarget::PITCH) {
+    target_freq1_ *= pitchLfoMultiplier();
+    target_freq2_ *= pitchLfoMultiplier();
+  }
+
+  if (immediate) {
+    current_freq1_ = target_freq1_;
+    current_freq2_ = target_freq2_;
+    waveform1_->frequency(current_freq1_);
+    waveform2_->frequency(current_freq2_);
+  }
+}
+
+void Synth::updateModulation() {
+  if (patch_.lfo_target == LfoTarget::OFF || clampUnit(patch_.lfo_depth) <= 0.001f) {
+    filter_lfo_value_ = 0.0f;
+    filter_->frequency(normalizedToFilterHz(patch_.cutoff));
+    return;
+  }
+
+  const float rate_hz = 0.15f + (clampUnit(patch_.lfo_rate) * 10.0f);
+  const float delta_seconds = 0.001f;
+  lfo_phase_ += rate_hz * delta_seconds;
+  while (lfo_phase_ >= 1.0f) {
+    lfo_phase_ -= 1.0f;
+  }
+
+  const float triangle = lfo_phase_ < 0.5f ? (-1.0f + (lfo_phase_ * 4.0f))
+                                            : (3.0f - (lfo_phase_ * 4.0f));
+  if (patch_.lfo_target == LfoTarget::FILTER) {
+    filter_lfo_value_ = triangle * clampUnit(patch_.lfo_depth) * 0.18f;
+    filter_->frequency(normalizedToFilterHz(patch_.cutoff + filter_lfo_value_));
+  } else {
+    filter_lfo_value_ = 0.0f;
+  }
+}
+
+float Synth::noteToFrequency(uint8_t note) const {
+  if (note > 127) {
+    note = 127;
+  }
+  return kMidiNoteFrequencies[note];
+}
+
+float Synth::noteWithBendToFrequency(int note_offset) const {
+  if (note_offset < 0) {
+    note_offset = 0;
+  }
+  if (note_offset > 127) {
+    note_offset = 127;
+  }
+  return noteToFrequency(static_cast<uint8_t>(note_offset)) * pitch_bend_factor_;
+}
+
+float Synth::pitchLfoMultiplier() const {
+  if (patch_.lfo_target != LfoTarget::PITCH) {
+    return 1.0f;
+  }
+
+  const float triangle = lfo_phase_ < 0.5f ? (-1.0f + (lfo_phase_ * 4.0f))
+                                            : (3.0f - (lfo_phase_ * 4.0f));
+  const float semitone_span = clampUnit(patch_.lfo_depth) * 2.0f;
+  return powf(2.0f, (triangle * semitone_span) / 12.0f);
+}
+
+float Synth::normalizedToFilterHz(float normalized) const {
+  normalized = clampUnit(normalized);
+  const float min_hz = 80.0f;
+  const float max_hz = 9000.0f;
+  return min_hz * powf(max_hz / min_hz, normalized);
 }

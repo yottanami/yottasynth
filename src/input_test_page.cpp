@@ -89,24 +89,35 @@ lv_obj_t * InputTestPage::createPage(lv_obj_t * menu) {
     return page_;
   }
 
-  page_ = lv_menu_page_create(menu, NULL);
+  page_ = lv_obj_create(menu);
+  lv_obj_remove_style_all(page_);
+  lv_obj_set_size(page_, lv_pct(100), lv_pct(100));
+  lv_obj_set_style_bg_color(page_, lv_color_hex(0x0E1726), 0);
+  lv_obj_set_style_pad_all(page_, 8, 0);
+  lv_obj_set_style_pad_row(page_, 6, 0);
+  lv_obj_set_flex_flow(page_, LV_FLEX_FLOW_COLUMN);
+  lv_obj_set_scroll_dir(page_, LV_DIR_VER);
 
-  lv_obj_t * cont = lv_menu_cont_create(page_);
+  lv_obj_t * cont = lv_obj_create(page_);
+  lv_obj_set_width(cont, lv_pct(100));
   touch_label_ = lv_label_create(cont);
   lv_obj_set_width(touch_label_, lv_pct(100));
   lv_label_set_long_mode(touch_label_, LV_LABEL_LONG_WRAP);
 
-  cont = lv_menu_cont_create(page_);
+  cont = lv_obj_create(page_);
+  lv_obj_set_width(cont, lv_pct(100));
   warning_label_ = lv_label_create(cont);
   lv_obj_set_width(warning_label_, lv_pct(100));
   lv_label_set_long_mode(warning_label_, LV_LABEL_LONG_WRAP);
 
-  cont = lv_menu_cont_create(page_);
+  cont = lv_obj_create(page_);
+  lv_obj_set_width(cont, lv_pct(100));
   summary_label_ = lv_label_create(cont);
   lv_obj_set_width(summary_label_, lv_pct(100));
   lv_label_set_long_mode(summary_label_, LV_LABEL_LONG_WRAP);
 
-  cont = lv_menu_cont_create(page_);
+  cont = lv_obj_create(page_);
+  lv_obj_set_width(cont, lv_pct(100));
   channels_label_ = lv_label_create(cont);
   lv_obj_set_width(channels_label_, lv_pct(100));
   lv_label_set_long_mode(channels_label_, LV_LABEL_LONG_WRAP);

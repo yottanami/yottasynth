@@ -164,6 +164,6 @@ extern AudioConnection          patchCord42;
 extern AudioConnection          patchCord43;
 extern AudioConnection          patchCord44;
 
-void setupAudio();
+bool setupAudio();
 
 #endif

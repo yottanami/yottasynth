@@ -2,10 +2,8 @@
 #include <Audio.h>
 #include <USBHost_t36.h>
 #include <EEPROM.h>
-#include "synth.h"
-
-// Access the global synth defined in src/main.cpp
-extern Synth synth;
+#include "app_state.h"
+#include "performance_engine.h"
 
 PlayMode::PlayMode() {
   // Constructor
@@ -65,32 +63,18 @@ void PlayMode::loop() {
   // data and run the handler functions as messages arrive.
   myusb.Task();
   midi1.read();
+  AppState::instance().updateMidiDevice(static_cast<bool>(midi1), midi1.idVendor(), midi1.idProduct());
 }
 
 // Handlers implemented as PlayMode:: static methods
 
 void PlayMode::myNoteOn(byte channel, byte note, byte velocity) {
-  Serial.print("Note On, ch=");
-  Serial.print(channel, DEC);
-  Serial.print(", note=");
-  Serial.print(note, DEC);
-  Serial.print(", velocity=");
-  Serial.println(velocity, DEC);
-
-  // Forward to synth so you can hear it
-  synth.onNoteOn(channel, note, velocity);
+  AppState::instance().registerMidiNote(note, velocity);
+  performance_engine.onMidiNoteOn(channel, note, velocity);
 }
 
 void PlayMode::myNoteOff(byte channel, byte note, byte velocity) {
-  Serial.print("Note Off, ch=");
-  Serial.print(channel, DEC);
-  Serial.print(", note=");
-  Serial.print(note, DEC);
-  Serial.print(", velocity=");
-  Serial.println(velocity, DEC);
-
-  // Forward to synth
-  synth.onNoteOff(channel, note, velocity);
+  performance_engine.onMidiNoteOff(channel, note, velocity);
 }
 
 void PlayMode::myAfterTouchPoly(byte channel, byte note, byte velocity) {
@@ -103,33 +87,23 @@ void PlayMode::myAfterTouchPoly(byte channel, byte note, byte velocity) {
 }
 
 void PlayMode::myControlChange(byte channel, byte control, byte value) {
-  Serial.print("Control Change, ch=");
-  Serial.print(channel, DEC);
-  Serial.print(", control=");
-  Serial.print(control, DEC);
-  Serial.print(", value=");
-  Serial.println(value, DEC);
+  (void)channel;
+  (void)control;
+  (void)value;
 }
 
 void PlayMode::myProgramChange(byte channel, byte program) {
-  Serial.print("Program Change, ch=");
-  Serial.print(channel, DEC);
-  Serial.print(", program=");
-  Serial.println(program, DEC);
+  (void)channel;
+  (void)program;
 }
 
 void PlayMode::myAfterTouchChannel(byte channel, byte pressure) {
-  Serial.print("After Touch, ch=");
-  Serial.print(channel, DEC);
-  Serial.print(", pressure=");
-  Serial.println(pressure, DEC);
+  (void)channel;
+  (void)pressure;
 }
 
 void PlayMode::myPitchChange(byte channel, int pitch) {
-  Serial.print("Pitch Change, ch=");
-  Serial.print(channel, DEC);
-  Serial.print(", pitch=");
-  Serial.println(pitch, DEC);
+  performance_engine.onMidiPitchBend(channel, pitch);
 }
 
 void PlayMode::mySystemExclusiveChunk(const uint8_t *data, uint16_t length, bool last) {
@@ -184,46 +158,36 @@ void PlayMode::myTimeCodeQuarterFrame(byte data) {
 }
 
 void PlayMode::mySongPosition(uint16_t beats) {
-  Serial.print("Song Position, beat=");
-  Serial.println(beats);
+  (void)beats;
 }
 
 void PlayMode::mySongSelect(byte songNumber) {
-  Serial.print("Song Select, song=");
-  Serial.println(songNumber, DEC);
+  (void)songNumber;
 }
 
 void PlayMode::myTuneRequest() {
-  Serial.println("Tune Request");
 }
 
 void PlayMode::myClock() {
-  Serial.println("Clock");
 }
 
 void PlayMode::myStart() {
-  Serial.println("Start");
 }
 
 void PlayMode::myContinue() {
-  Serial.println("Continue");
 }
 
 void PlayMode::myStop() {
-  Serial.println("Stop");
 }
 
 void PlayMode::myActiveSensing() {
-  Serial.println("Active Sensing");
 }
 
 void PlayMode::mySystemReset() {
-  Serial.println("System Reset");
 }
 
 void PlayMode::myRealTimeSystem(uint8_t realtimebyte) {
-  Serial.print("Real Time Message, code=");
-  Serial.println(realtimebyte, HEX);
+  (void)realtimebyte;
 }
 
 void PlayMode::printBytes(const uint8_t *data, unsigned int size) {

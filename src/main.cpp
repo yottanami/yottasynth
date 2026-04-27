@@ -1,358 +1,154 @@
-#include <lvgl.h>
-#include <XPT2046_Touchscreen.h>
 #include <SPI.h>
-
-//#if LV_USE_TFT_ESPI
 #include <TFT_eSPI.h>
-//#endif
+#include <XPT2046_Touchscreen.h>
+#include <lvgl.h>
 
-#include "main_menu.h"
-#include "input_test_page.h"
+#include "app_state.h"
 #include "audio_setup.h"
-#include "mux_pins.h"
+#include "control_input.h"
+#include "input_test_page.h"
+#include "main_menu.h"
+#include "performance_engine.h"
+#include "play_mode.h"
 #include "settings.h"
 #include "synth.h"
-#include "play_mode.h"
-// define play_mode
-PlayMode play_mode;
 
 extern "C" void _reboot_Teensyduino_(void);
 
-// XPT2046_Touchscreen
-#define CS_PIN  5
-#define TIRQ_PIN  4
-
-#define TFT_HOR_RES   320
-#define TFT_VER_RES   240
-
-XPT2046_Touchscreen ts(CS_PIN, TIRQ_PIN);
-TFT_eSPI tft = TFT_eSPI(TFT_HOR_RES, TFT_VER_RES);
-
-/*LVGL draw into this buffer, 1/10 screen size usually works well. The size is in bytes*/
-#define DRAW_BUF_SIZE (TFT_HOR_RES * TFT_VER_RES / 10 * (LV_COLOR_DEPTH / 8))
-uint32_t draw_buf[DRAW_BUF_SIZE / 4];
-
 namespace {
+constexpr uint8_t kTouchCsPin = 5;
+constexpr uint8_t kTouchIrqPin = 4;
+constexpr uint16_t kDisplayWidth = 320;
+constexpr uint16_t kDisplayHeight = 240;
 
-constexpr uint8_t kMuxSignalPin = MuxPins::kSignal;
-constexpr int kMuxChannelCount = 8;
-constexpr unsigned long kPotPrintIntervalMs = 200;
-constexpr int kPotSamplesPerChannel = 4;
-constexpr bool kEnableAudioInit = false;
+XPT2046_Touchscreen ts(kTouchCsPin, kTouchIrqPin);
+TFT_eSPI tft = TFT_eSPI(kDisplayWidth, kDisplayHeight);
 
-void selectMuxChannel(const int channel)
-{
-  for (int bit = 0; bit < 4; ++bit) {
-    digitalWrite(MuxPins::kSelectPins[bit], bitRead(channel, bit));
-  }
+constexpr size_t kDrawBufferSize =
+    (kDisplayWidth * kDisplayHeight / 10U) * (LV_COLOR_DEPTH / 8U);
+DMAMEM uint32_t draw_buffer[kDrawBufferSize / sizeof(uint32_t)];
+
+unsigned long last_lv_tick_ms = 0;
+bool input_test_started = false;
 }
 
-int readMuxChannel(const int channel)
-{
-  selectMuxChannel(channel);
-  delayMicroseconds(50);
-
-  // Discard the first conversion after switching the mux so the ADC
-  // sample-and-hold capacitor can settle on the new channel.
-  analogRead(kMuxSignalPin);
-  delayMicroseconds(10);
-
-  int total = 0;
-  for (int sample = 0; sample < kPotSamplesPerChannel; ++sample) {
-    total += analogRead(kMuxSignalPin);
-  }
-
-  return total / kPotSamplesPerChannel;
-}
-
-}  // namespace
-
-// initialize Synth and store it is lead_synth variable
+PlayMode play_mode;
 Synth synth(&lead_waveform1, &lead_waveform2, &lead_pink, &lead_filter, &lead_envelope);
 
-namespace {
-bool audio_ready = false;
-constexpr bool kSerialInputDebug = false;
-constexpr uint8_t kDebugDirectPins[] = {14, 15, 16, 17, 18, 24, 25, 26, 27, 38, 39, 40, 41};
-unsigned long last_debug_dump_ms = 0;
-
-bool modeUsesAudio(Mode mode) {
-  return mode == Mode::SYNTHESIZER
-      || mode == Mode::SEQUENCER
-      || mode == Mode::ARPEGGIATOR;
-}
-
-void ensureAudioReady() {
-  if (audio_ready) {
-    return;
-  }
-
-  setupAudio();
-  synth.setup();
-  play_mode.setup();
-  audio_ready = true;
-  Serial.println("Audio and MIDI initialized");
-}
-
-void configureSerialInputDebugPins() {
-  for (const uint8_t pin : MuxPins::kSelectPins) {
-    pinMode(pin, OUTPUT);
-    digitalWrite(pin, LOW);
-  }
-  pinMode(kMuxSignalPin, INPUT);
-
-  analogReadResolution(12);
-  analogReadAveraging(8);
-}
-
-void selectDebugMuxChannel(uint8_t channel) {
-  for (uint8_t bit = 0; bit < 4; ++bit) {
-    digitalWrite(MuxPins::kSelectPins[bit], bitRead(channel, bit));
-  }
-}
-
-uint16_t readDebugAnalogPin(uint8_t pin) {
-  analogRead(pin);
-  delayMicroseconds(100);
-  return analogRead(pin);
-}
-
-uint16_t readDebugMuxChannel(uint8_t channel) {
-  static constexpr uint8_t kDiscardCount = 8;
-  static constexpr uint8_t kSampleCount = 9;
-  uint16_t samples[kSampleCount];
-
-  selectDebugMuxChannel(channel);
-  delayMicroseconds(2500);
-
-  for (uint8_t discard = 0; discard < kDiscardCount; ++discard) {
-    analogRead(kMuxSignalPin);
-    delayMicroseconds(120);
-  }
-
-  for (uint8_t sample = 0; sample < kSampleCount; ++sample) {
-    samples[sample] = analogRead(kMuxSignalPin);
-    delayMicroseconds(120);
-  }
-
-  for (uint8_t outer = 0; outer + 1U < kSampleCount; ++outer) {
-    for (uint8_t inner = outer + 1U; inner < kSampleCount; ++inner) {
-      if (samples[inner] < samples[outer]) {
-        const uint16_t temp = samples[outer];
-        samples[outer] = samples[inner];
-        samples[inner] = temp;
-      }
-    }
-  }
-
-  return samples[kSampleCount / 2U];
-}
-
-void printSerialInputDebugDump() {
-  static constexpr uint8_t kGuessPotChannels[5] = {0, 3, 1, 2, 4};
-  static constexpr const char *kGuessPotNames[5] = {"RV1/C0", "RV2/C3", "RV3/C1", "RV4/C2", "RV5/C4"};
-
-  Serial.println();
-  Serial.print("=== serial input debug @ ");
-  Serial.print(millis());
-  Serial.println(" ms ===");
-
-  Serial.print("guess ");
-  for (uint8_t index = 0; index < 5; ++index) {
-    Serial.print(kGuessPotNames[index]);
-    Serial.print('=');
-    Serial.print(readDebugMuxChannel(kGuessPotChannels[index]));
-    if (index + 1U < 5) {
-      Serial.print("  ");
-    }
-  }
-  Serial.println();
-
-  Serial.println("mux scan 14/15/16/17 -> 22");
-  for (uint8_t channel = 0; channel < 16; ++channel) {
-    if (channel == 8) {
-      Serial.println();
-    }
-    Serial.print('C');
-    if (channel < 10) {
-      Serial.print('0');
-    }
-    Serial.print(channel);
-    Serial.print('=');
-    Serial.print(readDebugMuxChannel(channel));
-    Serial.print("  ");
-  }
-  Serial.println();
-
-  Serial.println("direct analog pins");
-  for (uint8_t index = 0; index < sizeof(kDebugDirectPins); ++index) {
-    const uint8_t pin = kDebugDirectPins[index];
-    Serial.print('P');
-    Serial.print(pin);
-    Serial.print('=');
-    Serial.print(readDebugAnalogPin(pin));
-    Serial.print("  ");
-    if ((index + 1U) % 4U == 0U) {
-      Serial.println();
-    }
-  }
-  Serial.println();
-}
-
-void setupSerialInputDebug() {
-  Serial.begin(115200);
-  while (!Serial && millis() < 4000) {
-    ;
-  }
-
-  configureSerialInputDebugPins();
-  Serial.println();
-  Serial.println("TEMP SERIAL INPUT DEBUG");
-  Serial.println("This bypasses the UI and audio.");
-  Serial.println("Rotate one knob at a time and capture the output from pio device monitor.");
-  Serial.println("Expected KiCad guess: RV1/C0 RV2/C3 RV3/C1 RV4/C2 RV5/C4");
-}
-
-void loopSerialInputDebug() {
-  if (millis() - last_debug_dump_ms < 700) {
-    return;
-  }
-
-  last_debug_dump_ms = millis();
-  printSerialInputDebugDump();
-}
-}  // namespace
-
 #if LV_USE_LOG != 0
-void print_logs( lv_log_level_t level, const char * buf )
-{
-    LV_UNUSED(level);
-    Serial.println(buf);
-    Serial.flush();
+void print_logs(lv_log_level_t level, const char *buffer) {
+  LV_UNUSED(level);
+  Serial.println(buffer);
+  Serial.flush();
 }
 #endif
 
-/* LVGL calls it when a rendered image needs to copied to the display*/
-void my_disp_flush( lv_display_t *disp, const lv_area_t *area, uint8_t * px_map)
-{
-  uint32_t w = ( area->x2 - area->x1 + 1 );
-  uint32_t h = ( area->y2 - area->y1 + 1 );
+void my_touchpad_read(lv_indev_t *indev, lv_indev_data_t *data) {
+  LV_UNUSED(indev);
+
+  const bool touched = ts.touched();
+  TS_Point p = ts.getPoint();
+
+  int x = map(p.y, 400, 3829, 0, kDisplayWidth - 1);
+  int y = map(p.x, 540, 3756, 0, kDisplayHeight - 1);
+
+  x = constrain(x, 0, kDisplayWidth - 1);
+  y = constrain(y, 0, kDisplayHeight - 1);
+
+  input_test_page.updateTouch(touched, x, y, p.x, p.y);
+
+  if (!touched) {
+    data->state = LV_INDEV_STATE_RELEASED;
+    return;
+  }
+
+  data->state = LV_INDEV_STATE_PRESSED;
+  data->point.x = x;
+  data->point.y = y;
+}
+
+void my_disp_flush(lv_display_t *display, const lv_area_t *area, uint8_t *px_map) {
+  LV_UNUSED(display);
+
+  const uint32_t width = area->x2 - area->x1 + 1U;
+  const uint32_t height = area->y2 - area->y1 + 1U;
 
   tft.startWrite();
-  tft.setAddrWindow(area->x1, area->y1, w, h);
-  tft.pushColors((uint16_t *)px_map, w * h, true);
+  tft.setAddrWindow(area->x1, area->y1, width, height);
+  tft.pushColors(reinterpret_cast<uint16_t *>(px_map), width * height, true);
   tft.endWrite();
 
-  lv_disp_flush_ready(disp);
+  lv_display_flush_ready(display);
 }
 
+void setup() {
+  Serial.begin(115200);
 
-void my_touchpad_read( lv_indev_t * indev, lv_indev_data_t * data ) 
-{
-  bool touched = ts.touched();
-  TS_Point p = ts.getPoint();
-  
-  int x = map(p.y, 400, 3829, 0, TFT_HOR_RES - 1);
-  int y = map(p.x, 540, 3756, 0, TFT_VER_RES - 1);
-
-  x = constrain(x, 0, TFT_HOR_RES - 1);
-  y = constrain(y, 0, TFT_VER_RES - 1);
-
-  LV_UNUSED(indev);
-  input_test_page.updateTouch(touched, x, y, p.x, p.y);
-  
-  if(!touched) {    
-    data->state = LV_INDEV_STATE_RELEASED;
-  } else {
-    data->state = LV_INDEV_STATE_PRESSED;
-    data->point.x = x;
-    data->point.y = y;
-  }
-}
-
-void setup()
-{
-  if (kSerialInputDebug) {
-    setupSerialInputDebug();
-    return;
-  }
-
-  Serial.begin( 115200 );
-
-  // TODO: move display settings to a seperate function
   lv_init();
-  tft.begin(); /* TFT init */
-  tft.setRotation(3); /* Landscape orientation */
+  tft.begin();
+  tft.setRotation(3);
   ts.begin();
-  pinMode(TIRQ_PIN, INPUT_PULLUP);
-  delay(100);
-  //tft.setRotation(0);
   ts.setRotation(0);
-  
-  /* register print function for debugging */
-  #if LV_USE_LOG != 0
-    lv_log_register_print_cb( print_logs );
-  #endif
+  pinMode(kTouchIrqPin, INPUT_PULLUP);
 
-  lv_display_t * disp;
-  #if LV_USE_TFT_ESPI
-    disp = lv_tft_espi_create(TFT_HOR_RES, TFT_VER_RES, draw_buf, sizeof(draw_buf));
-  #else
-    disp = lv_display_create(TFT_HOR_RES, TFT_VER_RES);
-    lv_display_set_flush_cb(disp, my_disp_flush);
-    lv_display_set_buffers(disp, draw_buf, NULL, sizeof(draw_buf), LV_DISPLAY_RENDER_MODE_PARTIAL);
-  #endif
+#if LV_USE_LOG != 0
+  lv_log_register_print_cb(print_logs);
+#endif
 
-  /* Initialize the (dummy) input device driver */
-  lv_indev_t * indev = lv_indev_create();
-  lv_indev_set_type(indev, LV_INDEV_TYPE_POINTER); /*Touchpad should have POINTER type*/
+  lv_display_t *display = lv_display_create(kDisplayWidth, kDisplayHeight);
+  lv_display_set_flush_cb(display, my_disp_flush);
+  lv_display_set_buffers(display, draw_buffer, nullptr, sizeof(draw_buffer),
+                         LV_DISPLAY_RENDER_MODE_PARTIAL);
+
+  lv_indev_t *indev = lv_indev_create();
+  lv_indev_set_type(indev, LV_INDEV_TYPE_POINTER);
   lv_indev_set_read_cb(indev, my_touchpad_read);
- 
+
   main_menu.render();
-  input_test_page.setMuxEnabled(true);
-  
-  Serial.println( "Setup done" );
 
-  analogReadResolution(10);
-  analogReadAveraging(8);
+  control_input.begin();
+  const bool audio_codec_ready = setupAudio();
+  AppState::instance().updateAudioStatus(audio_codec_ready, false);
+  synth.setup();
+  play_mode.setup();
+  performance_engine.begin(&synth);
 
-  for (const uint8_t pin : MuxPins::kSelectPins) {
-    pinMode(pin, OUTPUT);
-  }
-  pinMode(kMuxSignalPin, INPUT);
-  selectMuxChannel(0);
-
+  last_lv_tick_ms = millis();
 }
 
-void loop()
-{
-  if (kSerialInputDebug) {
-    loopSerialInputDebug();
-    return;
-  }
-
-  static Mode last_mode = Mode::MENU;
+void loop() {
+  AppState::instance().refreshTransientStatus(millis());
   const Mode mode = Settings::getInstance()->getMode();
 
-  if (modeUsesAudio(mode)) {
-    ensureAudioReady();
-  }
-
-  input_test_page.setMuxEnabled(!audio_ready);
-
-  if (mode == Mode::INPUT_TEST && last_mode != Mode::INPUT_TEST) {
-    input_test_page.begin();
-  }
-
   if (mode == Mode::INPUT_TEST) {
+    input_test_page.setMuxEnabled(true);
+    if (!input_test_started) {
+      input_test_page.begin();
+      input_test_started = true;
+    }
     input_test_page.loop();
-  }
+  } else {
+    input_test_page.setMuxEnabled(false);
+    input_test_started = false;
 
-  if (audio_ready) {
-    // Poll MIDI from USB host and dispatch to Synth
+    control_input.update();
+    for (uint8_t index = 0; index < ControlInput::kPotCount; ++index) {
+      float value = 0.0f;
+      if (control_input.consumePotChange(index, value)) {
+        main_menu.handlePotChange(index, value);
+      }
+    }
+
+    if (control_input.consumeOkPress()) {
+      main_menu.handleOkPress();
+    }
+
     play_mode.loop();
-    // Update synth internals (LFO, envelopes, etc.)
+    performance_engine.update();
+    synth.applyPatch(AppState::instance().patch);
     synth.loop();
+    AppState::instance().updateAudioStatus(AppState::instance().audio.codec_ready,
+                                           synth.isSelfTestActive());
   }
 
   if (Serial.available()) {
@@ -365,31 +161,13 @@ void loop()
     }
   }
 
-  static unsigned long lastPotPrintMs = 0;
-  const unsigned long now = millis();
-  if (now - lastPotPrintMs >= kPotPrintIntervalMs) {
-    lastPotPrintMs = now;
+  main_menu.loop();
 
-    for (int channel = 0; channel < kMuxChannelCount; ++channel) {
-      if (channel > 0) {
-        Serial.print(" | ");
-      }
-
-      Serial.print("C");
-      Serial.print(channel);
-      Serial.print(": ");
-      Serial.print(readMuxChannel(channel));
-    }
-    Serial.println();
+  const unsigned long now_ms = millis();
+  const unsigned long elapsed_ms = now_ms - last_lv_tick_ms;
+  if (elapsed_ms > 0) {
+    lv_tick_inc(elapsed_ms);
+    last_lv_tick_ms = now_ms;
   }
-
-  // Update synth internals (LFO, envelopes, etc.)
-  //synth.loop();
-  
-  // Let the GUI do its work
-  lv_task_handler();
-  lv_tick_inc(5);
-  //usbMIDI.read();
-
-  last_mode = mode;
+  lv_timer_handler();
 }

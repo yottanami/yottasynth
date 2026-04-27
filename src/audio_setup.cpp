@@ -164,10 +164,16 @@ AudioConnection          patchCord43(global_filter_mixer, 0, i2s1, 0);
 AudioConnection          patchCord44(global_filter_mixer, 0, i2s1, 1);
 
 
-void setupAudio() {
-  sgtl5000_1.enable();
-  sgtl5000_1.volume(0.50);
-  
+bool setupAudio() {
   AudioMemory(30);
-  
+
+  const bool enabled = sgtl5000_1.enable();
+  if (!enabled) {
+    return false;
+  }
+
+  sgtl5000_1.volume(0.70f);
+  sgtl5000_1.dacVolume(1.0f);
+  sgtl5000_1.lineOutLevel(29);
+  return true;
 }
