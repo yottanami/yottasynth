@@ -288,8 +288,8 @@ void InputTestPage::refreshLabels() {
       warning_text,
       sizeof(warning_text),
       mux_enabled_
-          ? "Probe mode is active.\nUsing checkMux-style scanning on KiCad pins: COM=A9 S0=A5 S1=A6 S2=A7 S3=A8.\nTap the screen once to reset activity ranges, then move one knob."
-          : "Mux test is disabled because audio has already started.\nPins A6, A7 and A9 overlap Teensy audio pins.\nReboot and open INPUT TEST before entering SYNTHESIZER.");
+          ? "Probe mode is active.\nUsing mux scan pins: SIG=22 S0=14 S1=15 S2=16 S3=17.\nTap the screen once to reset activity ranges, then move one knob."
+          : "Mux test is disabled because audio has already started.\nThis build only scans the mux before audio init.\nReboot and open INPUT TEST before entering SYNTHESIZER.");
 
   if (mux_enabled_) {
     snprintf(
@@ -366,7 +366,7 @@ void InputTestPage::refreshLabels() {
     snprintf(
         summary_text,
         sizeof(summary_text),
-        "Probe values are hidden in this state\nbecause the mux pins are owned by the audio subsystem.");
+        "Probe values are hidden in this state\nbecause mux scanning stops after audio starts.");
 
     snprintf(
         channels_text,

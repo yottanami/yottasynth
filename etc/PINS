@@ -1,10 +1,10 @@
 5v
 G
-22: Sig
-17:S3
-16:S2
-15:S1
 14:S0
+15:S1
+16:S2
+17:S3
+22:SIG
 
 h14:screen8
 h13:screen5 rtl

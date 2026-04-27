@@ -9,6 +9,7 @@
 #include "main_menu.h"
 #include "input_test_page.h"
 #include "audio_setup.h"
+#include "mux_pins.h"
 #include "settings.h"
 #include "synth.h"
 #include "play_mode.h"
@@ -33,22 +34,16 @@ uint32_t draw_buf[DRAW_BUF_SIZE / 4];
 
 namespace {
 
-constexpr int kMuxSelectPins[] = {14, 15, 16, 17};
-constexpr int kMuxSignalPin = 22;
+constexpr uint8_t kMuxSignalPin = MuxPins::kSignal;
 constexpr int kMuxChannelCount = 8;
 constexpr unsigned long kPotPrintIntervalMs = 200;
 constexpr int kPotSamplesPerChannel = 4;
 constexpr bool kEnableAudioInit = false;
 
-bool touchIrqActive()
-{
-  return digitalRead(TIRQ_PIN) == LOW;
-}
-
 void selectMuxChannel(const int channel)
 {
   for (int bit = 0; bit < 4; ++bit) {
-    digitalWrite(kMuxSelectPins[bit], bitRead(channel, bit));
+    digitalWrite(MuxPins::kSelectPins[bit], bitRead(channel, bit));
   }
 }
 
@@ -78,11 +73,6 @@ Synth synth(&lead_waveform1, &lead_waveform2, &lead_pink, &lead_filter, &lead_en
 namespace {
 bool audio_ready = false;
 constexpr bool kSerialInputDebug = false;
-constexpr uint8_t kDebugMuxS0Pin = A5;
-constexpr uint8_t kDebugMuxS1Pin = A6;
-constexpr uint8_t kDebugMuxS2Pin = A7;
-constexpr uint8_t kDebugMuxS3Pin = A8;
-constexpr uint8_t kDebugMuxSignalPin = A9;
 constexpr uint8_t kDebugDirectPins[] = {14, 15, 16, 17, 18, 24, 25, 26, 27, 38, 39, 40, 41};
 unsigned long last_debug_dump_ms = 0;
 
@@ -105,26 +95,20 @@ void ensureAudioReady() {
 }
 
 void configureSerialInputDebugPins() {
-  pinMode(kDebugMuxS0Pin, OUTPUT);
-  pinMode(kDebugMuxS1Pin, OUTPUT);
-  pinMode(kDebugMuxS2Pin, OUTPUT);
-  pinMode(kDebugMuxS3Pin, OUTPUT);
-  pinMode(kDebugMuxSignalPin, INPUT);
-
-  digitalWrite(kDebugMuxS0Pin, LOW);
-  digitalWrite(kDebugMuxS1Pin, LOW);
-  digitalWrite(kDebugMuxS2Pin, LOW);
-  digitalWrite(kDebugMuxS3Pin, LOW);
+  for (const uint8_t pin : MuxPins::kSelectPins) {
+    pinMode(pin, OUTPUT);
+    digitalWrite(pin, LOW);
+  }
+  pinMode(kMuxSignalPin, INPUT);
 
   analogReadResolution(12);
   analogReadAveraging(8);
 }
 
 void selectDebugMuxChannel(uint8_t channel) {
-  digitalWrite(kDebugMuxS0Pin, bitRead(channel, 0));
-  digitalWrite(kDebugMuxS1Pin, bitRead(channel, 1));
-  digitalWrite(kDebugMuxS2Pin, bitRead(channel, 2));
-  digitalWrite(kDebugMuxS3Pin, bitRead(channel, 3));
+  for (uint8_t bit = 0; bit < 4; ++bit) {
+    digitalWrite(MuxPins::kSelectPins[bit], bitRead(channel, bit));
+  }
 }
 
 uint16_t readDebugAnalogPin(uint8_t pin) {
@@ -142,12 +126,12 @@ uint16_t readDebugMuxChannel(uint8_t channel) {
   delayMicroseconds(2500);
 
   for (uint8_t discard = 0; discard < kDiscardCount; ++discard) {
-    analogRead(kDebugMuxSignalPin);
+    analogRead(kMuxSignalPin);
     delayMicroseconds(120);
   }
 
   for (uint8_t sample = 0; sample < kSampleCount; ++sample) {
-    samples[sample] = analogRead(kDebugMuxSignalPin);
+    samples[sample] = analogRead(kMuxSignalPin);
     delayMicroseconds(120);
   }
 
@@ -184,7 +168,7 @@ void printSerialInputDebugDump() {
   }
   Serial.println();
 
-  Serial.println("mux scan A5/A6/A7/A8 -> A9");
+  Serial.println("mux scan 14/15/16/17 -> 22");
   for (uint8_t channel = 0; channel < 16; ++channel) {
     if (channel == 8) {
       Serial.println();
@@ -265,7 +249,6 @@ void my_disp_flush( lv_display_t *disp, const lv_area_t *area, uint8_t * px_map)
 
 void my_touchpad_read( lv_indev_t * indev, lv_indev_data_t * data ) 
 {
-
   bool touched = ts.touched();
   TS_Point p = ts.getPoint();
   
@@ -285,18 +268,6 @@ void my_touchpad_read( lv_indev_t * indev, lv_indev_data_t * data )
     data->point.x = x;
     data->point.y = y;
   }
-
-  if (!ts.touched()) {
-    return;
-  }
-
-  const TS_Point p = ts.getPoint();
-  const int x = constrain(map(p.y, 400, 3829, 1, TFT_VER_RES), 0, TFT_VER_RES - 1);
-  const int y = constrain(map(p.x, 540, 3756, 1, TFT_HOR_RES), 0, TFT_HOR_RES - 1);
-
-  data->state = LV_INDEV_STATE_PRESSED;
-  data->point.x = x;
-  data->point.y = y;
 }
 
 void setup()
@@ -345,7 +316,7 @@ void setup()
   analogReadResolution(10);
   analogReadAveraging(8);
 
-  for (const int pin : kMuxSelectPins) {
+  for (const uint8_t pin : MuxPins::kSelectPins) {
     pinMode(pin, OUTPUT);
   }
   pinMode(kMuxSignalPin, INPUT);

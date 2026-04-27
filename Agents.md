@@ -116,20 +116,20 @@ From `platformio.ini` and `src/main.cpp`:
 
 ### Potentiometers and joystick wiring
 
-From `etc/board/board.kicad_pcb`:
+From `etc/board/board.kicad_pcb` plus the current mux wiring override:
 
 - `RV1`..`RV5` are five potentiometers
 - their wipers go into mux channels `C0`..`C4`
 - the mux is a `74HC4067` breakout (`U2`)
-- mux select pins:
-  - `S0 -> A5`
-  - `S1 -> A6`
-  - `S2 -> A7`
-  - `S3 -> A8`
-- mux common output:
-  - `COM -> A9`
+- current mux select pins:
+  - `S0 -> 14`
+  - `S1 -> 15`
+  - `S2 -> 16`
+  - `S3 -> 17`
+- current mux signal pin:
+  - `SIG -> 22`
 
-This matches the commented-out firmware in `src/main.cpp`, which manually toggles `A5..A8` and reads `A9`.
+The runtime mux/test code uses the same live mapping in `src/main.cpp` and `include/input_test_page.h`.
 
 There is also a 5-pin connector `J1`:
 
@@ -546,7 +546,7 @@ That is a better fit than jumping directly into Summit-level complexity.
 
 ### Best next engineering steps
 
-1. Implement mux scanning for `A5..A9` and map `RV1..RV5`.
+1. Use mux scanning on `14/15/16/17 -> 22` to map `RV1..RV5` into the synth path.
 2. Confirm joystick wiring on `J1` and read its channels through the same mux.
 3. Replace placeholder menu pages with one real synth edit page.
 4. Reuse the older CC parameter map as the first internal parameter model.

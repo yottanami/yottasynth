@@ -4,6 +4,8 @@
 #include <Arduino.h>
 #include <lvgl.h>
 
+#include "mux_pins.h"
+
 class InputTestPage {
 public:
   InputTestPage();
@@ -18,11 +20,11 @@ private:
   static constexpr uint8_t MUX_TOTAL_CHANNEL_COUNT = 16;
   static constexpr uint8_t MUX_POT_CHANNEL_COUNT = 5;
   static constexpr uint8_t DIRECT_PIN_COUNT = 19;
-  static constexpr uint8_t MUX_S0_PIN = A5;
-  static constexpr uint8_t MUX_S1_PIN = A6;
-  static constexpr uint8_t MUX_S2_PIN = A7;
-  static constexpr uint8_t MUX_S3_PIN = A8;
-  static constexpr uint8_t MUX_SIGNAL_PIN = A9;
+  static constexpr uint8_t MUX_S0_PIN = MuxPins::kS0;
+  static constexpr uint8_t MUX_S1_PIN = MuxPins::kS1;
+  static constexpr uint8_t MUX_S2_PIN = MuxPins::kS2;
+  static constexpr uint8_t MUX_S3_PIN = MuxPins::kS3;
+  static constexpr uint8_t MUX_SIGNAL_PIN = MuxPins::kSignal;
 
   void configureMuxPins();
   void primeMuxChannels();
