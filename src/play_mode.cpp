@@ -78,12 +78,9 @@ void PlayMode::myNoteOff(byte channel, byte note, byte velocity) {
 }
 
 void PlayMode::myAfterTouchPoly(byte channel, byte note, byte velocity) {
-  Serial.print("AfterTouch Change, ch=");
-  Serial.print(channel, DEC);
-  Serial.print(", note=");
-  Serial.print(note, DEC);
-  Serial.print(", velocity=");
-  Serial.println(velocity, DEC);
+  (void)channel;
+  (void)note;
+  (void)velocity;
 }
 
 void PlayMode::myControlChange(byte channel, byte control, byte value) {
@@ -107,54 +104,18 @@ void PlayMode::myPitchChange(byte channel, int pitch) {
 }
 
 void PlayMode::mySystemExclusiveChunk(const uint8_t *data, uint16_t length, bool last) {
-  Serial.print("SysEx Message: ");
-  PlayMode::printBytes(data, length);
-  if (last) {
-    Serial.println(" (end)");
-  } else {
-    Serial.println(" (to be continued)");
-  }
+  (void)data;
+  (void)length;
+  (void)last;
 }
 
 void PlayMode::mySystemExclusive(uint8_t *data, unsigned int length) {
-  Serial.print("SysEx Message: ");
-  PlayMode::printBytes(data, length);
-  Serial.println();
+  (void)data;
+  (void)length;
 }
 
 void PlayMode::myTimeCodeQuarterFrame(byte data) {
-  static char SMPTE[8]={'0','0','0','0','0','0','0','0'};
-  static byte fps=0;
-  byte index = data >> 4;
-  byte number = data & 15;
-  if (index == 7) {
-    fps = (number >> 1) & 3;
-    number = number & 1;
-  }
-  if (index < 8 || number < 10) {
-    SMPTE[index] = number + '0';
-    Serial.print("TimeCode: ");  // perhaps only print when index == 7
-    Serial.print(SMPTE[7]);
-    Serial.print(SMPTE[6]);
-    Serial.print(':');
-    Serial.print(SMPTE[5]);
-    Serial.print(SMPTE[4]);
-    Serial.print(':');
-    Serial.print(SMPTE[3]);
-    Serial.print(SMPTE[2]);
-    Serial.print('.');
-    Serial.print(SMPTE[1]);  // perhaps add 2 to compensate for MIDI latency?
-    Serial.print(SMPTE[0]);
-    switch (fps) {
-      case 0: Serial.println(" 24 fps"); break;
-      case 1: Serial.println(" 25 fps"); break;
-      case 2: Serial.println(" 29.97 fps"); break;
-      case 3: Serial.println(" 30 fps"); break;
-    }
-  } else {
-    Serial.print("TimeCode: invalid data = ");
-    Serial.println(data, HEX);
-  }
+  (void)data;
 }
 
 void PlayMode::mySongPosition(uint16_t beats) {

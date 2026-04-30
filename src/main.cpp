@@ -20,6 +20,11 @@ constexpr uint8_t kTouchCsPin = 5;
 constexpr uint8_t kTouchIrqPin = 4;
 constexpr uint16_t kDisplayWidth = 320;
 constexpr uint16_t kDisplayHeight = 240;
+constexpr int16_t kTouchRawXMin = 540;
+constexpr int16_t kTouchRawXMax = 3756;
+constexpr int16_t kTouchRawYMin = 400;
+constexpr int16_t kTouchRawYMax = 3829;
+constexpr int16_t kTouchRawMargin = 100;
 
 XPT2046_Touchscreen ts(kTouchCsPin, kTouchIrqPin);
 TFT_eSPI tft = TFT_eSPI(kDisplayWidth, kDisplayHeight);
@@ -30,6 +35,18 @@ DMAMEM uint32_t draw_buffer[kDrawBufferSize / sizeof(uint32_t)];
 
 unsigned long last_lv_tick_ms = 0;
 bool input_test_started = false;
+uint8_t touch_press_streak = 0;
+int16_t last_touch_x = 0;
+int16_t last_touch_y = 0;
+int16_t last_raw_touch_x = 0;
+int16_t last_raw_touch_y = 0;
+
+bool touchPointInRange(const TS_Point &point) {
+  return point.x >= (kTouchRawXMin - kTouchRawMargin) &&
+         point.x <= (kTouchRawXMax + kTouchRawMargin) &&
+         point.y >= (kTouchRawYMin - kTouchRawMargin) &&
+         point.y <= (kTouchRawYMax + kTouchRawMargin);
+}
 }
 
 PlayMode play_mode;
@@ -47,17 +64,39 @@ void my_touchpad_read(lv_indev_t *indev, lv_indev_data_t *data) {
   LV_UNUSED(indev);
 
   const bool touched = ts.touched();
-  TS_Point p = ts.getPoint();
+  if (!touched) {
+    touch_press_streak = 0;
+    input_test_page.updateTouch(false, last_touch_x, last_touch_y, last_raw_touch_x,
+                                last_raw_touch_y);
+    data->state = LV_INDEV_STATE_RELEASED;
+    return;
+  }
 
-  int x = map(p.y, 400, 3829, 0, kDisplayWidth - 1);
-  int y = map(p.x, 540, 3756, 0, kDisplayHeight - 1);
+  const TS_Point p = ts.getPoint();
+  if (!touchPointInRange(p)) {
+    touch_press_streak = 0;
+    input_test_page.updateTouch(false, last_touch_x, last_touch_y, p.x, p.y);
+    data->state = LV_INDEV_STATE_RELEASED;
+    return;
+  }
+
+  int x = map(p.y, kTouchRawYMin, kTouchRawYMax, 0, kDisplayWidth - 1);
+  int y = map(p.x, kTouchRawXMin, kTouchRawXMax, 0, kDisplayHeight - 1);
 
   x = constrain(x, 0, kDisplayWidth - 1);
   y = constrain(y, 0, kDisplayHeight - 1);
 
-  input_test_page.updateTouch(touched, x, y, p.x, p.y);
+  last_touch_x = x;
+  last_touch_y = y;
+  last_raw_touch_x = p.x;
+  last_raw_touch_y = p.y;
 
-  if (!touched) {
+  if (touch_press_streak < 2) {
+    ++touch_press_streak;
+  }
+
+  input_test_page.updateTouch(touch_press_streak >= 2, x, y, p.x, p.y);
+  if (touch_press_streak < 2) {
     data->state = LV_INDEV_STATE_RELEASED;
     return;
   }

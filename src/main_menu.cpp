@@ -163,6 +163,10 @@ const char *potName(uint8_t index) {
       return "";
   }
 }
+
+void disableScroll(lv_obj_t *obj) {
+  lv_obj_clear_flag(obj, LV_OBJ_FLAG_SCROLLABLE);
+}
 }
 
 MainMenu::MainMenu() {
@@ -178,6 +182,7 @@ void MainMenu::render() {
   lv_obj_remove_style_all(root_);
   lv_obj_set_size(root_, lv_pct(100), lv_pct(100));
   lv_obj_set_style_bg_color(root_, lv_color_hex(0x09111F), 0);
+  disableScroll(root_);
 
   lv_obj_t *top_bar = lv_obj_create(root_);
   lv_obj_set_pos(top_bar, 0, 0);
@@ -186,6 +191,7 @@ void MainMenu::render() {
   lv_obj_set_style_border_width(top_bar, 0, 0);
   lv_obj_set_style_bg_color(top_bar, lv_color_hex(0x111C2E), 0);
   lv_obj_set_style_pad_all(top_bar, 0, 0);
+  disableScroll(top_bar);
 
   status_title_label_ = lv_label_create(top_bar);
   lv_obj_set_style_text_font(status_title_label_, LV_FONT_DEFAULT, 0);
@@ -214,6 +220,7 @@ void MainMenu::render() {
   lv_obj_set_style_radius(content_panel_, 0, 0);
   lv_obj_set_style_border_width(content_panel_, 0, 0);
   lv_obj_set_style_bg_color(content_panel_, lv_color_hex(0x0D1628), 0);
+  disableScroll(content_panel_);
 
   input_test_panel_ = lv_obj_create(root_);
   lv_obj_set_pos(input_test_panel_, 0, 46);
@@ -221,6 +228,7 @@ void MainMenu::render() {
   lv_obj_set_style_radius(input_test_panel_, 0, 0);
   lv_obj_set_style_border_width(input_test_panel_, 0, 0);
   lv_obj_set_style_bg_color(input_test_panel_, lv_color_hex(0x0D1628), 0);
+  disableScroll(input_test_panel_);
   input_test_page.createPage(input_test_panel_);
 
   pot_row_ = lv_obj_create(content_panel_);
@@ -229,6 +237,7 @@ void MainMenu::render() {
   lv_obj_set_style_bg_opa(pot_row_, LV_OPA_TRANSP, 0);
   lv_obj_set_style_border_width(pot_row_, 0, 0);
   lv_obj_set_style_pad_all(pot_row_, 0, 0);
+  disableScroll(pot_row_);
 
   for (uint8_t index = 0; index < kPotCardCount; ++index) {
     pot_cards_[index] = lv_obj_create(pot_row_);
@@ -294,6 +303,7 @@ void MainMenu::render() {
   lv_obj_set_style_radius(tab_bar, 0, 0);
   lv_obj_set_style_border_width(tab_bar, 0, 0);
   lv_obj_set_style_bg_color(tab_bar, lv_color_hex(0x111C2E), 0);
+  disableScroll(tab_bar);
 
   for (uint8_t index = 0; index < kTabCount; ++index) {
     tab_buttons_[index] = lv_button_create(tab_bar);
