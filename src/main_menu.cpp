@@ -3,9 +3,9 @@
 #include <math.h>
 #include <stdio.h>
 
+#include "audio_setup.h"
 #include "input_test_page.h"
 #include "performance_engine.h"
-#include "audio_setup.h"
 #include "settings.h"
 #include "synth.h"
 
@@ -54,38 +54,6 @@ const char *noteName(uint8_t note) {
                                    "F#", "G", "G#", "A", "A#", "B"};
   snprintf(buffer, sizeof(buffer), "%s%u", kNames[note % 12U], (note / 12U) - 1U);
   return buffer;
-}
-
-void appendMidiStatus(char *buffer, size_t size) {
-  const MidiStatus &midi = state.midi;
-  const size_t used = strlen(buffer);
-  if (used >= size) {
-    return;
-  }
-
-  if (!midi.connected) {
-    snprintf(buffer + used, size - used, "  MIDI:WAIT");
-    return;
-  }
-
-  if (midi.note_recent) {
-    snprintf(buffer + used, size - used, "  MIDI:%s v%u", noteName(midi.last_note),
-             midi.last_velocity);
-    return;
-  }
-
-  snprintf(buffer + used, size - used, "  MIDI:%04X:%04X", midi.vendor_id, midi.product_id);
-}
-
-void appendAudioStatus(char *buffer, size_t size) {
-  const size_t used = strlen(buffer);
-  if (used >= size) {
-    return;
-  }
-
-  const AudioStatus &audio = state.audio;
-  snprintf(buffer + used, size - used, " AUD:%s%s", audio.codec_ready ? "OK" : "FAIL",
-           audio.self_test_active ? "*" : "");
 }
 
 const char *yesNo(bool value) {
@@ -208,23 +176,16 @@ void MainMenu::render() {
   status_title_label_ = lv_label_create(top_bar);
   lv_obj_set_style_text_font(status_title_label_, LV_FONT_DEFAULT, 0);
   lv_obj_set_style_text_color(status_title_label_, lv_color_white(), 0);
-  lv_obj_set_width(status_title_label_, 210);
+  lv_obj_set_width(status_title_label_, 300);
   lv_label_set_long_mode(status_title_label_, LV_LABEL_LONG_CLIP);
   lv_obj_align(status_title_label_, LV_ALIGN_TOP_LEFT, 10, 4);
 
   status_label_ = lv_label_create(top_bar);
   lv_obj_set_style_text_font(status_label_, LV_FONT_DEFAULT, 0);
   lv_obj_set_style_text_color(status_label_, lv_color_hex(0xD5E1F5), 0);
-  lv_obj_set_width(status_label_, 254);
+  lv_obj_set_width(status_label_, 300);
   lv_label_set_long_mode(status_label_, LV_LABEL_LONG_CLIP);
   lv_obj_align(status_label_, LV_ALIGN_BOTTOM_LEFT, 10, -4);
-
-  diag_button_ = lv_button_create(top_bar);
-  lv_obj_set_size(diag_button_, 46, 24);
-  lv_obj_align(diag_button_, LV_ALIGN_RIGHT_MID, 0, 0);
-  lv_obj_add_event_cb(diag_button_, diagEventHandler, LV_EVENT_CLICKED, nullptr);
-  diag_button_label_ = lv_label_create(diag_button_);
-  lv_obj_center(diag_button_label_);
 
   content_panel_ = lv_obj_create(root_);
   lv_obj_set_pos(content_panel_, 0, 46);
@@ -244,8 +205,8 @@ void MainMenu::render() {
   input_test_page.createPage(input_test_panel_);
 
   pot_row_ = lv_obj_create(content_panel_);
-  lv_obj_set_pos(pot_row_, 8, 8);
-  lv_obj_set_size(pot_row_, 304, 66);
+  lv_obj_set_pos(pot_row_, -9, 8);
+  lv_obj_set_size(pot_row_, 316, 56);
   lv_obj_set_style_bg_opa(pot_row_, LV_OPA_TRANSP, 0);
   lv_obj_set_style_border_width(pot_row_, 0, 0);
   lv_obj_set_style_pad_all(pot_row_, 0, 0);
@@ -253,29 +214,29 @@ void MainMenu::render() {
 
   for (uint8_t index = 0; index < kPotCardCount; ++index) {
     pot_cards_[index] = lv_obj_create(pot_row_);
-    lv_obj_set_size(pot_cards_[index], 56, 66);
-    lv_obj_set_pos(pot_cards_[index], index * 61, 0);
+    lv_obj_set_size(pot_cards_[index], 60, 56);
+    lv_obj_set_pos(pot_cards_[index], index * 64, 0);
     lv_obj_set_style_border_width(pot_cards_[index], 0, 0);
     lv_obj_set_style_radius(pot_cards_[index], 12, 0);
-    lv_obj_set_style_pad_all(pot_cards_[index], 4, 0);
+    lv_obj_set_style_pad_all(pot_cards_[index], 3, 0);
 
     pot_name_labels_[index] = lv_label_create(pot_cards_[index]);
     lv_obj_set_style_text_font(pot_name_labels_[index], LV_FONT_DEFAULT, 0);
-    lv_obj_set_width(pot_name_labels_[index], 48);
+    lv_obj_set_width(pot_name_labels_[index], 54);
     lv_label_set_long_mode(pot_name_labels_[index], LV_LABEL_LONG_CLIP);
     lv_obj_set_style_text_align(pot_name_labels_[index], LV_TEXT_ALIGN_CENTER, 0);
-    lv_obj_align(pot_name_labels_[index], LV_ALIGN_TOP_MID, 0, 2);
+    lv_obj_align(pot_name_labels_[index], LV_ALIGN_TOP_MID, 0, 5);
 
     pot_value_labels_[index] = lv_label_create(pot_cards_[index]);
     lv_obj_set_style_text_font(pot_value_labels_[index], LV_FONT_DEFAULT, 0);
-    lv_obj_set_width(pot_value_labels_[index], 48);
+    lv_obj_set_width(pot_value_labels_[index], 54);
     lv_label_set_long_mode(pot_value_labels_[index], LV_LABEL_LONG_CLIP);
     lv_obj_set_style_text_align(pot_value_labels_[index], LV_TEXT_ALIGN_CENTER, 0);
-    lv_obj_align(pot_value_labels_[index], LV_ALIGN_BOTTOM_MID, 0, -8);
+    lv_obj_align(pot_value_labels_[index], LV_ALIGN_BOTTOM_MID, 0, -5);
   }
 
   seq_info_label_ = lv_label_create(content_panel_);
-  lv_obj_set_pos(seq_info_label_, 10, 10);
+  lv_obj_set_pos(seq_info_label_, -6, 6);
   lv_obj_set_width(seq_info_label_, 300);
   lv_label_set_long_mode(seq_info_label_, LV_LABEL_LONG_CLIP);
   lv_obj_set_style_text_font(seq_info_label_, LV_FONT_DEFAULT, 0);
@@ -284,7 +245,7 @@ void MainMenu::render() {
   for (uint8_t index = 0; index < kActionCount; ++index) {
     action_buttons_[index] = lv_button_create(content_panel_);
     lv_obj_set_size(action_buttons_[index], 145, 26);
-    lv_obj_set_pos(action_buttons_[index], (index % 2U) ? 161 : 14, index < 2U ? 82 : 114);
+    lv_obj_set_pos(action_buttons_[index], (index % 2U) ? 153 : 6, index < 2U ? 70 : 102);
     lv_obj_add_event_cb(action_buttons_[index], actionEventHandler, LV_EVENT_CLICKED,
                         reinterpret_cast<void *>(static_cast<uintptr_t>(index)));
     action_labels_[index] = lv_label_create(action_buttons_[index]);
@@ -299,7 +260,7 @@ void MainMenu::render() {
     const int col = index % 4;
     const int row = index / 4;
     lv_obj_set_size(seq_step_buttons_[index], 72, 34);
-    lv_obj_set_pos(seq_step_buttons_[index], 10 + col * 76, 42 + row * 38);
+    lv_obj_set_pos(seq_step_buttons_[index], -6 + col * 76, 34 + row * 36);
     lv_obj_add_event_cb(seq_step_buttons_[index], seqStepEventHandler, LV_EVENT_CLICKED,
                         reinterpret_cast<void *>(static_cast<uintptr_t>(index)));
     seq_step_labels_[index] = lv_label_create(seq_step_buttons_[index]);
@@ -315,12 +276,13 @@ void MainMenu::render() {
   lv_obj_set_style_radius(tab_bar, 0, 0);
   lv_obj_set_style_border_width(tab_bar, 0, 0);
   lv_obj_set_style_bg_color(tab_bar, lv_color_hex(0x111C2E), 0);
+  lv_obj_set_style_pad_all(tab_bar, 0, 0);
   disableScroll(tab_bar);
 
   for (uint8_t index = 0; index < kTabCount; ++index) {
     tab_buttons_[index] = lv_button_create(tab_bar);
-    lv_obj_set_size(tab_buttons_[index], 42, 32);
-    lv_obj_set_pos(tab_buttons_[index], 4 + index * 45, 6);
+    lv_obj_set_size(tab_buttons_[index], 40, 32);
+    lv_obj_set_pos(tab_buttons_[index], 12 + index * 43, 6);
     lv_obj_add_event_cb(tab_buttons_[index], tabEventHandler, LV_EVENT_CLICKED,
                         reinterpret_cast<void *>(static_cast<uintptr_t>(index)));
     tab_labels_[index] = lv_label_create(tab_buttons_[index]);
@@ -451,15 +413,6 @@ void MainMenu::seqStepEventHandler(lv_event_t *event) {
   state.markDirty();
 }
 
-void MainMenu::diagEventHandler(lv_event_t *event) {
-  if (lv_event_get_code(event) != LV_EVENT_CLICKED || g_main_menu == nullptr) {
-    return;
-  }
-
-  state.setInputTestVisible(!state.ui.show_input_test);
-  g_main_menu->updateMode();
-}
-
 void MainMenu::setPage(PageId page) {
   state.setPage(page);
   updateMode();
@@ -479,16 +432,19 @@ void MainMenu::refresh() {
 }
 
 void MainMenu::refreshStatusBar() {
+  if (state.ui.show_input_test) {
+    lv_label_set_text(status_title_label_, "TEST PAGE");
+    lv_label_set_text(status_label_, "Touch, audio, MIDI, and mux diagnostics");
+    return;
+  }
+
   lv_label_set_text(status_title_label_, pageTitle(state.ui.page));
 
   char status_text[96];
   snprintf(status_text, sizeof(status_text), "%uBPM %s A:%s S:%s",
            state.transport.bpm, state.transport.running ? "RUN" : "STOP",
            yesNo(state.arp.enabled), yesNo(state.sequencer.enabled));
-  appendAudioStatus(status_text, sizeof(status_text));
-  appendMidiStatus(status_text, sizeof(status_text));
   lv_label_set_text(status_label_, status_text);
-  lv_label_set_text(diag_button_label_, state.ui.show_input_test ? "UI" : "I/O");
 }
 
 void MainMenu::refreshTabs() {
@@ -522,20 +478,27 @@ void MainMenu::refreshPotCards() {
 
 void MainMenu::refreshActionButtons() {
   const uint32_t accent = kPageColors[static_cast<uint8_t>(state.ui.page)];
-  static const char *kLabels[6][4] = {
-      {"RUN/STOP", "ARP TOG", "TEST", "PANIC"},
+  static const char *kLabels[7][4] = {
+      {"RUN/STOP", "ARP TOG", "", "PANIC"},
       {"OCT -", "OCT +", "DET 0", "NOISE 0"},
       {"SUS -", "SUS +", "SNAP", "LONG"},
       {"LFO OFF", "FILT LFO", "PITCH LFO", "DEPTH 0"},
       {"ENABLE", "LATCH", "RUN/STOP", "CLR HELD"},
       {"RUN/STOP", "REC ARM", "BANK", "CLEAR"},
+      {"TEST PAGE", "", "", ""},
   };
-  if (state.ui.page == PageId::SETTINGS) {
-    return;
-  }
 
   const uint8_t page_index = static_cast<uint8_t>(state.ui.page);
   for (uint8_t index = 0; index < kActionCount; ++index) {
+    if (state.ui.page == PageId::SEQ) {
+      lv_obj_set_size(action_buttons_[index], 72, 24);
+      lv_obj_set_pos(action_buttons_[index], 10 + index * 76, 110);
+      lv_obj_set_width(action_labels_[index], 64);
+    } else {
+      lv_obj_set_size(action_buttons_[index], 145, 26);
+      lv_obj_set_pos(action_buttons_[index], (index % 2U) ? 153 : 6, index < 2U ? 70 : 102);
+      lv_obj_set_width(action_labels_[index], 130);
+    }
     lv_label_set_text(action_labels_[index], kLabels[page_index][index]);
     lv_obj_set_style_bg_color(action_buttons_[index], lv_color_hex(accent), 0);
     lv_obj_set_style_bg_opa(action_buttons_[index], LV_OPA_40, 0);
@@ -543,9 +506,6 @@ void MainMenu::refreshActionButtons() {
 
   if (state.ui.page == PageId::SEQ && state.ui.confirm_clear_sequence) {
     lv_label_set_text(action_labels_[3], "WAIT OK");
-  }
-  if (state.ui.page == PageId::PLAY && state.audio.self_test_active) {
-    lv_label_set_text(action_labels_[2], "TESTING");
   }
 }
 
@@ -584,14 +544,15 @@ void MainMenu::refreshVisibility() {
   if (show_input) {
     lv_obj_add_flag(content_panel_, LV_OBJ_FLAG_HIDDEN);
     lv_obj_clear_flag(input_test_panel_, LV_OBJ_FLAG_HIDDEN);
-    return;
+  } else {
+    lv_obj_clear_flag(content_panel_, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(input_test_panel_, LV_OBJ_FLAG_HIDDEN);
   }
 
-  lv_obj_clear_flag(content_panel_, LV_OBJ_FLAG_HIDDEN);
-  lv_obj_add_flag(input_test_panel_, LV_OBJ_FLAG_HIDDEN);
-
   for (uint8_t index = 0; index < kActionCount; ++index) {
-    if (show_seq || show_settings) {
+    if (show_input) {
+      lv_obj_add_flag(action_buttons_[index], LV_OBJ_FLAG_HIDDEN);
+    } else if (show_settings && index > 0) {
       lv_obj_add_flag(action_buttons_[index], LV_OBJ_FLAG_HIDDEN);
     } else {
       lv_obj_clear_flag(action_buttons_[index], LV_OBJ_FLAG_HIDDEN);
@@ -618,7 +579,6 @@ void MainMenu::handleAction(uint8_t action_index) {
     case PageId::PLAY:
       if (action_index == 0) state.transport.running = !state.transport.running;
       if (action_index == 1) state.arp.enabled = !state.arp.enabled;
-      if (action_index == 2) synth.startSelfTest();
       if (action_index == 3) performance_engine.stopTransport();
       break;
     case PageId::OSC_MIX:
@@ -654,12 +614,22 @@ void MainMenu::handleAction(uint8_t action_index) {
       if (action_index == 3) performance_engine.clearHeldNotes();
       break;
     case PageId::SEQ:
-      if (action_index == 0) state.transport.running = !state.transport.running;
-      if (action_index == 1) state.sequencer.record_armed = !state.sequencer.record_armed;
+      if (action_index == 0) {
+        state.sequencer.enabled = true;
+        state.transport.running = !state.transport.running;
+      }
+      if (action_index == 1) {
+        state.sequencer.enabled = true;
+        state.sequencer.record_armed = !state.sequencer.record_armed;
+      }
       if (action_index == 2) state.sequencer.visible_bank ^= 1U;
       if (action_index == 3) state.ui.confirm_clear_sequence = !state.ui.confirm_clear_sequence;
       break;
     case PageId::SETTINGS:
+      if (action_index == 0) {
+        state.setInputTestVisible(true);
+        updateMode();
+      }
       break;
   }
 

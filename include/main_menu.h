@@ -23,7 +23,6 @@ class MainMenu {
   static void tabEventHandler(lv_event_t *event);
   static void actionEventHandler(lv_event_t *event);
   static void seqStepEventHandler(lv_event_t *event);
-  static void diagEventHandler(lv_event_t *event);
 
   void setPage(PageId page);
   void updateMode();
@@ -42,8 +41,6 @@ class MainMenu {
   lv_obj_t *input_test_panel_ = nullptr;
   lv_obj_t *status_title_label_ = nullptr;
   lv_obj_t *status_label_ = nullptr;
-  lv_obj_t *diag_button_ = nullptr;
-  lv_obj_t *diag_button_label_ = nullptr;
   lv_obj_t *pot_row_ = nullptr;
   lv_obj_t *pot_cards_[kPotCardCount] = {nullptr, nullptr, nullptr, nullptr, nullptr};
   lv_obj_t *pot_name_labels_[kPotCardCount] = {nullptr, nullptr, nullptr, nullptr, nullptr};

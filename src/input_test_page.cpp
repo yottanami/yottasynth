@@ -2,12 +2,18 @@
 
 #include <stdio.h>
 
+#include "app_state.h"
+#include "synth.h"
+
+extern Synth synth;
+
 namespace {
 constexpr uint8_t kDirectPinCount = 19;
 constexpr uint8_t kPotChannels[5] = {0, 3, 1, 2, 4};
 constexpr const char *kPotNames[5] = {"RV1/C0", "RV2/C3", "RV3/C1", "RV4/C2", "RV5/C4"};
 constexpr uint16_t kAdcMaxValue = 4095;
 constexpr uint8_t kDirectPins[kDirectPinCount] = {8, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 38, 39, 40, 41};
+constexpr uint8_t kTouchIrqPin = 4;
 constexpr unsigned long kMuxScanIntervalUs = 1000;
 constexpr unsigned long kDirectSampleIntervalMs = 50;
 constexpr unsigned long kUiRefreshIntervalMs = 200;
@@ -27,8 +33,14 @@ uint16_t spanFromMinMax(uint16_t min_value, uint16_t max_value) {
 
 InputTestPage::InputTestPage()
   : page_(nullptr),
+    controls_row_(nullptr),
+    self_test_button_(nullptr),
+    self_test_label_(nullptr),
+    reset_button_(nullptr),
+    reset_label_(nullptr),
     touch_label_(nullptr),
     warning_label_(nullptr),
+    system_label_(nullptr),
     summary_label_(nullptr),
     channels_label_(nullptr),
     touch_pressed_(false),
@@ -36,6 +48,7 @@ InputTestPage::InputTestPage()
     touch_y_(0),
     raw_touch_x_(0),
     raw_touch_y_(0),
+    raw_touch_z_(0),
     mux_enabled_(true),
     initialized_(false),
     activity_initialized_(false),
@@ -98,6 +111,25 @@ lv_obj_t * InputTestPage::createPage(lv_obj_t * menu) {
   lv_obj_set_flex_flow(page_, LV_FLEX_FLOW_COLUMN);
   lv_obj_set_scroll_dir(page_, LV_DIR_VER);
 
+  controls_row_ = lv_obj_create(page_);
+  lv_obj_set_width(controls_row_, lv_pct(100));
+  lv_obj_set_style_pad_all(controls_row_, 4, 0);
+  lv_obj_set_style_pad_column(controls_row_, 8, 0);
+  lv_obj_set_flex_flow(controls_row_, LV_FLEX_FLOW_ROW);
+
+  self_test_button_ = lv_button_create(controls_row_);
+  lv_obj_set_size(self_test_button_, 136, 28);
+  lv_obj_add_event_cb(self_test_button_, selfTestEventHandler, LV_EVENT_CLICKED, nullptr);
+  self_test_label_ = lv_label_create(self_test_button_);
+  lv_obj_center(self_test_label_);
+
+  reset_button_ = lv_button_create(controls_row_);
+  lv_obj_set_size(reset_button_, 136, 28);
+  lv_obj_add_event_cb(reset_button_, resetEventHandler, LV_EVENT_CLICKED, nullptr);
+  reset_label_ = lv_label_create(reset_button_);
+  lv_label_set_text(reset_label_, "RESET RANGES");
+  lv_obj_center(reset_label_);
+
   lv_obj_t * cont = lv_obj_create(page_);
   lv_obj_set_width(cont, lv_pct(100));
   touch_label_ = lv_label_create(cont);
@@ -109,6 +141,12 @@ lv_obj_t * InputTestPage::createPage(lv_obj_t * menu) {
   warning_label_ = lv_label_create(cont);
   lv_obj_set_width(warning_label_, lv_pct(100));
   lv_label_set_long_mode(warning_label_, LV_LABEL_LONG_WRAP);
+
+  cont = lv_obj_create(page_);
+  lv_obj_set_width(cont, lv_pct(100));
+  system_label_ = lv_label_create(cont);
+  lv_obj_set_width(system_label_, lv_pct(100));
+  lv_label_set_long_mode(system_label_, LV_LABEL_LONG_WRAP);
 
   cont = lv_obj_create(page_);
   lv_obj_set_width(cont, lv_pct(100));
@@ -124,6 +162,25 @@ lv_obj_t * InputTestPage::createPage(lv_obj_t * menu) {
 
   refreshLabels();
   return page_;
+}
+
+void InputTestPage::selfTestEventHandler(lv_event_t *event) {
+  if (lv_event_get_code(event) != LV_EVENT_CLICKED) {
+    return;
+  }
+
+  synth.startSelfTest();
+  AppState::instance().markDirty();
+  input_test_page.refreshLabels();
+}
+
+void InputTestPage::resetEventHandler(lv_event_t *event) {
+  if (lv_event_get_code(event) != LV_EVENT_CLICKED) {
+    return;
+  }
+
+  input_test_page.resetActivityTracking();
+  input_test_page.refreshLabels();
 }
 
 void InputTestPage::loop() {
@@ -163,12 +220,14 @@ void InputTestPage::loop() {
   last_touch_pressed_ = touch_pressed_;
 }
 
-void InputTestPage::updateTouch(bool pressed, int16_t x, int16_t y, int16_t raw_x, int16_t raw_y) {
+void InputTestPage::updateTouch(bool pressed, int16_t x, int16_t y, int16_t raw_x, int16_t raw_y,
+                                int16_t raw_z) {
   touch_pressed_ = pressed;
   touch_x_ = x;
   touch_y_ = y;
   raw_touch_x_ = raw_x;
   raw_touch_y_ = raw_y;
+  raw_touch_z_ = raw_z;
 }
 
 void InputTestPage::primeMuxChannels() {
@@ -243,14 +302,18 @@ void InputTestPage::resetActivityTracking() {
 }
 
 void InputTestPage::refreshLabels() {
-  if (touch_label_ == nullptr || warning_label_ == nullptr || summary_label_ == nullptr || channels_label_ == nullptr) {
+  if (touch_label_ == nullptr || warning_label_ == nullptr || system_label_ == nullptr ||
+      summary_label_ == nullptr || channels_label_ == nullptr || self_test_label_ == nullptr) {
     return;
   }
 
   char touch_text[96];
   char warning_text[256];
+  char system_text[224];
   char summary_text[448];
   char channels_text[1536];
+  const AppState &state = AppState::instance();
+  const int touch_irq = digitalRead(kTouchIrqPin);
 
   uint16_t top_span[4] = {0, 0, 0, 0};
   char top_name[4][8] = {"-", "-", "-", "-"};
@@ -288,12 +351,24 @@ void InputTestPage::refreshLabels() {
   snprintf(
       touch_text,
       sizeof(touch_text),
-      "Touch: %s X:%d Y:%d\nRaw: X:%d Y:%d",
+      "Touch: %s X:%d Y:%d IRQ:%d Z:%d\nRaw: X:%d Y:%d",
       touch_pressed_ ? "DOWN" : "UP",
       touch_x_,
       touch_y_,
+      touch_irq,
+      raw_touch_z_,
       raw_touch_x_,
       raw_touch_y_);
+
+  snprintf(
+      system_text,
+      sizeof(system_text),
+      "System\nAudio:%s  Self-test:%s\nMIDI:%s  Note:%u Vel:%u",
+      state.audio.codec_ready ? "OK" : "FAIL",
+      state.audio.self_test_active ? "ON" : "OFF",
+      state.midi.connected ? "OK" : "WAIT",
+      state.midi.last_note,
+      state.midi.last_velocity);
 
   snprintf(
       warning_text,
@@ -385,8 +460,10 @@ void InputTestPage::refreshLabels() {
         "Use this flow:\n1. Reboot the Teensy\n2. Open INPUT TEST first\n3. Move the knobs\n4. Enter SYNTHESIZER after testing");
   }
 
+  lv_label_set_text(self_test_label_, synth.isSelfTestActive() ? "TESTING" : "AUDIO TEST");
   lv_label_set_text(touch_label_, touch_text);
   lv_label_set_text(warning_label_, warning_text);
+  lv_label_set_text(system_label_, system_text);
   lv_label_set_text(summary_label_, summary_text);
   lv_label_set_text(channels_label_, channels_text);
 }

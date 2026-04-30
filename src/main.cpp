@@ -36,16 +36,36 @@ DMAMEM uint32_t draw_buffer[kDrawBufferSize / sizeof(uint32_t)];
 unsigned long last_lv_tick_ms = 0;
 bool input_test_started = false;
 uint8_t touch_press_streak = 0;
+uint8_t touch_release_streak = 0;
+bool touch_confirmed = false;
 int16_t last_touch_x = 0;
 int16_t last_touch_y = 0;
 int16_t last_raw_touch_x = 0;
 int16_t last_raw_touch_y = 0;
+int16_t last_raw_touch_z = 0;
+
+constexpr uint8_t kTouchConfirmCount = 2;
+constexpr uint8_t kTouchReleaseCount = 1;
+constexpr int16_t kTouchPressurePress = 380;
+constexpr int16_t kTouchPressureRelease = 180;
 
 bool touchPointInRange(const TS_Point &point) {
   return point.x >= (kTouchRawXMin - kTouchRawMargin) &&
          point.x <= (kTouchRawXMax + kTouchRawMargin) &&
          point.y >= (kTouchRawYMin - kTouchRawMargin) &&
          point.y <= (kTouchRawYMax + kTouchRawMargin);
+}
+
+void releaseTouch(lv_indev_data_t *data, bool clear_debug_touch) {
+  touch_press_streak = 0;
+  touch_release_streak = 0;
+  touch_confirmed = false;
+  last_raw_touch_z = 0;
+  if (clear_debug_touch) {
+    input_test_page.updateTouch(false, last_touch_x, last_touch_y, last_raw_touch_x,
+                                last_raw_touch_y, 0);
+  }
+  data->state = LV_INDEV_STATE_RELEASED;
 }
 }
 
@@ -63,22 +83,29 @@ void print_logs(lv_log_level_t level, const char *buffer) {
 void my_touchpad_read(lv_indev_t *indev, lv_indev_data_t *data) {
   LV_UNUSED(indev);
 
-  const bool touched = ts.touched();
-  if (!touched) {
-    touch_press_streak = 0;
-    input_test_page.updateTouch(false, last_touch_x, last_touch_y, last_raw_touch_x,
-                                last_raw_touch_y);
-    data->state = LV_INDEV_STATE_RELEASED;
+  const bool irq_active = digitalRead(kTouchIrqPin) == LOW;
+  const TS_Point p = ts.getPoint();
+  const int16_t pressure_threshold =
+      touch_confirmed ? kTouchPressureRelease : kTouchPressurePress;
+  const bool valid_touch =
+      touchPointInRange(p) && p.z >= pressure_threshold &&
+      (irq_active || p.z >= kTouchPressurePress);
+  if (!valid_touch) {
+    if (touch_confirmed && touch_release_streak + 1U < kTouchReleaseCount) {
+      ++touch_release_streak;
+      input_test_page.updateTouch(true, last_touch_x, last_touch_y, last_raw_touch_x,
+                                  last_raw_touch_y, last_raw_touch_z);
+      data->state = LV_INDEV_STATE_PRESSED;
+      data->point.x = last_touch_x;
+      data->point.y = last_touch_y;
+      return;
+    }
+
+    releaseTouch(data, true);
     return;
   }
 
-  const TS_Point p = ts.getPoint();
-  if (!touchPointInRange(p)) {
-    touch_press_streak = 0;
-    input_test_page.updateTouch(false, last_touch_x, last_touch_y, p.x, p.y);
-    data->state = LV_INDEV_STATE_RELEASED;
-    return;
-  }
+  touch_release_streak = 0;
 
   int x = map(p.y, kTouchRawYMin, kTouchRawYMax, 0, kDisplayWidth - 1);
   int y = map(p.x, kTouchRawXMin, kTouchRawXMax, 0, kDisplayHeight - 1);
@@ -86,17 +113,28 @@ void my_touchpad_read(lv_indev_t *indev, lv_indev_data_t *data) {
   x = constrain(x, 0, kDisplayWidth - 1);
   y = constrain(y, 0, kDisplayHeight - 1);
 
+  if (!touch_confirmed) {
+    if (touch_press_streak < kTouchConfirmCount) {
+      ++touch_press_streak;
+    }
+
+    input_test_page.updateTouch(false, x, y, p.x, p.y, p.z);
+    if (touch_press_streak < kTouchConfirmCount) {
+      data->state = LV_INDEV_STATE_RELEASED;
+      return;
+    }
+
+    touch_confirmed = true;
+  }
+
   last_touch_x = x;
   last_touch_y = y;
   last_raw_touch_x = p.x;
   last_raw_touch_y = p.y;
+  last_raw_touch_z = p.z;
 
-  if (touch_press_streak < 2) {
-    ++touch_press_streak;
-  }
-
-  input_test_page.updateTouch(touch_press_streak >= 2, x, y, p.x, p.y);
-  if (touch_press_streak < 2) {
+  input_test_page.updateTouch(true, x, y, p.x, p.y, p.z);
+  if (!touch_confirmed) {
     data->state = LV_INDEV_STATE_RELEASED;
     return;
   }
