@@ -66,6 +66,7 @@ Mode AppState::currentMode() const {
     case PageId::OSC_MIX:
     case PageId::FILTER_AMP:
     case PageId::MOD:
+    case PageId::FX:
     default:
       return Mode::SYNTHESIZER;
   }
@@ -129,6 +130,8 @@ const char *pageTitle(PageId page) {
       return "FILTER / AMP";
     case PageId::MOD:
       return "MOD";
+    case PageId::FX:
+      return "FX";
     case PageId::ARP:
       return "ARPEGGIATOR";
     case PageId::SEQ:
@@ -137,6 +140,19 @@ const char *pageTitle(PageId page) {
       return "SETTINGS";
     default:
       return "PLAY";
+  }
+}
+
+const char *fxModeLabel(FxMode mode) {
+  switch (mode) {
+    case FxMode::ECHO:
+      return "ECHO";
+    case FxMode::REVERB:
+      return "REVERB";
+    case FxMode::DRIVE:
+      return "DRIVE";
+    default:
+      return "ECHO";
   }
 }
 

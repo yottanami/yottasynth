@@ -7,6 +7,8 @@
 #include <SD.h>
 #include <SerialFlash.h>
 
+#include "app_state.h"
+
 /* // GUItool: begin automatically generated code */
 /* AudioSynthWaveform       lead_waveform2;      //xy=67.5714340209961,63.14285659790039 */
 /* AudioSynthWaveform       mid_waveform1;      //xy=68,155 */
@@ -36,7 +38,17 @@
 /* AudioMixer4              global_mixer;         //xy=965,305.14288330078125 */
 /* AudioFilterStateVariable global_filter;        //xy=1137,308 */
 /* AudioMixer4              global_filter_mixer;         //xy=1325,314 */
-/* AudioOutputI2S           i2s1;           //xy=1512.428466796875,315.28570556640625 */
+/* AudioMixer4              fx_echo_input_mixer;         //xy=1325,160 */
+/* AudioMixer4              fx_echo_feedback_mixer;         //xy=1327,230 */
+/* AudioMixer4              fx_reverb_input_mixer;         //xy=1328,400 */
+/* AudioEffectDelay         fx_delay;         //xy=1492,193 */
+/* AudioEffectFreeverb      fx_reverb;         //xy=1498,407 */
+/* AudioAmplifier           fx_drive_input;         //xy=1500,493 */
+/* AudioEffectWaveshaper    fx_drive_shaper;         //xy=1658,492 */
+/* AudioEffectBitcrusher    fx_drive_crusher;         //xy=1816,494 */
+/* AudioMixer4              final_left_mixer;         //xy=2001,231 */
+/* AudioMixer4              final_right_mixer;         //xy=2002,355 */
+/* AudioOutputI2S           i2s1;           //xy=2165.428466796875,294.28570556640625 */
 /* AudioConnection          patchCord1(lead_waveform2, 0, lead_mixer, 1); */
 /* AudioConnection          patchCord2(mid_waveform1, 0, mid_mixer, 0); */
 /* AudioConnection          patchCord3(lead_waveform1, 0, lead_mixer, 0); */
@@ -79,8 +91,27 @@
 /* AudioConnection          patchCord40(global_filter, 0, global_filter_mixer, 0); */
 /* AudioConnection          patchCord41(global_filter, 1, global_filter_mixer, 1); */
 /* AudioConnection          patchCord42(global_filter, 2, global_filter_mixer, 2); */
-/* AudioConnection          patchCord43(global_filter_mixer, 0, i2s1, 0); */
-/* AudioConnection          patchCord44(global_filter_mixer, 0, i2s1, 1); */
+/* AudioConnection          patchCord43(global_filter_mixer, 0, fx_echo_input_mixer, 0); */
+/* AudioConnection          patchCord44(global_filter_mixer, 0, fx_reverb_input_mixer, 0); */
+/* AudioConnection          patchCord45(global_filter_mixer, 0, fx_drive_input, 0); */
+/* AudioConnection          patchCord46(global_filter_mixer, 0, final_left_mixer, 0); */
+/* AudioConnection          patchCord47(global_filter_mixer, 0, final_right_mixer, 0); */
+/* AudioConnection          patchCord48(fx_echo_feedback_mixer, 0, fx_echo_input_mixer, 1); */
+/* AudioConnection          patchCord49(fx_echo_input_mixer, fx_delay); */
+/* AudioConnection          patchCord50(fx_delay, 0, final_left_mixer, 1); */
+/* AudioConnection          patchCord51(fx_delay, 1, final_right_mixer, 1); */
+/* AudioConnection          patchCord52(fx_delay, 0, fx_echo_feedback_mixer, 0); */
+/* AudioConnection          patchCord53(fx_delay, 1, fx_echo_feedback_mixer, 1); */
+/* AudioConnection          patchCord54(fx_delay, 2, fx_reverb_input_mixer, 1); */
+/* AudioConnection          patchCord55(fx_reverb_input_mixer, fx_reverb); */
+/* AudioConnection          patchCord56(fx_reverb, 0, final_left_mixer, 2); */
+/* AudioConnection          patchCord57(fx_reverb, 0, final_right_mixer, 2); */
+/* AudioConnection          patchCord58(fx_drive_input, fx_drive_shaper); */
+/* AudioConnection          patchCord59(fx_drive_shaper, fx_drive_crusher); */
+/* AudioConnection          patchCord60(fx_drive_crusher, 0, final_left_mixer, 3); */
+/* AudioConnection          patchCord61(fx_drive_crusher, 0, final_right_mixer, 3); */
+/* AudioConnection          patchCord62(final_left_mixer, 0, i2s1, 0); */
+/* AudioConnection          patchCord63(final_right_mixer, 0, i2s1, 1); */
 /* AudioControlSGTL5000     sgtl5000_1;     //xy=1409.5714111328125,425.1428527832031 */
 /* // GUItool: end automatically generated code */
 
@@ -114,6 +145,16 @@ extern AudioEffectEnvelope     lead_envelope;
 extern AudioMixer4             global_mixer;
 extern AudioFilterStateVariable global_filter;
 extern AudioMixer4             global_filter_mixer;
+extern AudioMixer4             fx_echo_input_mixer;
+extern AudioMixer4             fx_echo_feedback_mixer;
+extern AudioMixer4             fx_reverb_input_mixer;
+extern AudioEffectDelay        fx_delay;
+extern AudioEffectFreeverb     fx_reverb;
+extern AudioAmplifier          fx_drive_input;
+extern AudioEffectWaveshaper   fx_drive_shaper;
+extern AudioEffectBitcrusher   fx_drive_crusher;
+extern AudioMixer4             final_left_mixer;
+extern AudioMixer4             final_right_mixer;
 extern AudioOutputI2S          i2s1;
 extern AudioControlSGTL5000    sgtl5000_1;
 
@@ -163,8 +204,28 @@ extern AudioConnection          patchCord41;
 extern AudioConnection          patchCord42;
 extern AudioConnection          patchCord43;
 extern AudioConnection          patchCord44;
+extern AudioConnection          patchCord45;
+extern AudioConnection          patchCord46;
+extern AudioConnection          patchCord47;
+extern AudioConnection          patchCord48;
+extern AudioConnection          patchCord49;
+extern AudioConnection          patchCord50;
+extern AudioConnection          patchCord51;
+extern AudioConnection          patchCord52;
+extern AudioConnection          patchCord53;
+extern AudioConnection          patchCord54;
+extern AudioConnection          patchCord55;
+extern AudioConnection          patchCord56;
+extern AudioConnection          patchCord57;
+extern AudioConnection          patchCord58;
+extern AudioConnection          patchCord59;
+extern AudioConnection          patchCord60;
+extern AudioConnection          patchCord61;
+extern AudioConnection          patchCord62;
+extern AudioConnection          patchCord63;
 
 bool setupAudio();
 void setOutputVolume(float volume);
+void applyFxState(const FxState &fx);
 
 #endif

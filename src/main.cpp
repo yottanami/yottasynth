@@ -224,6 +224,7 @@ void loop() {
     play_mode.loop();
     performance_engine.update();
     synth.applyPatch(AppState::instance().patch);
+    applyFxState(AppState::instance().fx);
     synth.loop();
     AppState::instance().updateAudioStatus(AppState::instance().audio.codec_ready,
                                            synth.isSelfTestActive());

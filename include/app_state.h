@@ -10,6 +10,7 @@ enum class PageId : uint8_t {
   OSC_MIX,
   FILTER_AMP,
   MOD,
+  FX,
   ARP,
   SEQ,
   SETTINGS
@@ -26,6 +27,12 @@ enum class ArpMode : uint8_t {
   DOWN,
   UP_DOWN,
   RANDOM
+};
+
+enum class FxMode : uint8_t {
+  ECHO = 0,
+  REVERB,
+  DRIVE
 };
 
 enum class TuningId : uint8_t {
@@ -80,6 +87,38 @@ struct ArpState {
   uint8_t gate = 70;
 };
 
+struct EchoFxState {
+  float mix = 0.34f;
+  float time = 0.30f;
+  float feedback = 0.42f;
+  float ratio = 0.62f;
+  float smear = 0.18f;
+};
+
+struct ReverbFxState {
+  float mix = 0.28f;
+  float size = 0.56f;
+  float damping = 0.42f;
+  float predelay = 0.12f;
+  float tone = 0.58f;
+};
+
+struct DriveFxState {
+  float mix = 0.38f;
+  float drive = 0.44f;
+  float tone = 0.68f;
+  float crush = 0.20f;
+  float level = 0.60f;
+};
+
+struct FxState {
+  bool enabled = false;
+  FxMode mode = FxMode::ECHO;
+  EchoFxState echo;
+  ReverbFxState reverb;
+  DriveFxState drive;
+};
+
 struct SequenceStep {
   bool active = false;
   bool tie = false;
@@ -127,6 +166,7 @@ class AppState {
   PatchState patch;
   TransportState transport;
   ArpState arp;
+  FxState fx;
   SequencerState sequencer;
   UiState ui;
   MidiStatus midi;
@@ -148,6 +188,7 @@ class AppState {
 
 const char *pageTitle(PageId page);
 const char *arpModeLabel(ArpMode mode);
+const char *fxModeLabel(FxMode mode);
 const char *lfoTargetLabel(LfoTarget target);
 const char *tuningLabel(TuningId tuning);
 uint8_t tuningCount();

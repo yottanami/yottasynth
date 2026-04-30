@@ -15,17 +15,18 @@ namespace {
 MainMenu *g_main_menu = nullptr;
 AppState &state = AppState::instance();
 
-constexpr PageId kPages[7] = {
+constexpr PageId kPages[8] = {
     PageId::PLAY, PageId::OSC_MIX, PageId::FILTER_AMP,
-    PageId::MOD,  PageId::ARP,     PageId::SEQ, PageId::SETTINGS,
+    PageId::MOD,  PageId::FX,      PageId::ARP, PageId::SEQ, PageId::SETTINGS,
 };
 
-constexpr const char *kTabTitles[7] = {
-    "PLAY", "OSC", "FILT", "MOD", "ARP", "SEQ", "SET",
+constexpr const char *kTabTitles[8] = {
+    "PLAY", "OSC", "FILT", "MOD", "FX", "ARP", "SEQ", "SET",
 };
 
-constexpr uint32_t kPageColors[7] = {
-    0x2F855A, 0x0EA5A4, 0xD97706, 0x2563EB, 0x9333EA, 0xDC2626, 0x475569,
+constexpr uint32_t kPageColors[8] = {
+    0x2F855A, 0x0EA5A4, 0xD97706, 0x2563EB,
+    0x7C3AED, 0x9333EA, 0xDC2626, 0x475569,
 };
 
 float clampUnit(float value) {
@@ -60,6 +61,56 @@ const char *yesNo(bool value) {
   return value ? "ON" : "OFF";
 }
 
+float msFromNormalized(float normalized, float min_ms, float max_ms) {
+  return min_ms + (clampUnit(normalized) * (max_ms - min_ms));
+}
+
+const char *fxPotName(uint8_t index) {
+  static const char *kEchoNames[5] = {"MIX", "TIME", "FDBK", "RATIO", "SMEAR"};
+  static const char *kReverbNames[5] = {"MIX", "SIZE", "DAMP", "PRE", "TONE"};
+  static const char *kDriveNames[5] = {"MIX", "DRIVE", "TONE", "CRUSH", "LEVEL"};
+
+  switch (state.fx.mode) {
+    case FxMode::ECHO:
+      return kEchoNames[index];
+    case FxMode::REVERB:
+      return kReverbNames[index];
+    case FxMode::DRIVE:
+      return kDriveNames[index];
+    default:
+      return kEchoNames[index];
+  }
+}
+
+void formatFxPotValue(char *buffer, size_t size, uint8_t index) {
+  switch (state.fx.mode) {
+    case FxMode::ECHO:
+      if (index == 0) snprintf(buffer, size, "%u%%", static_cast<unsigned>(state.fx.echo.mix * 100.0f));
+      if (index == 1) snprintf(buffer, size, "%ums", static_cast<unsigned>(msFromNormalized(state.fx.echo.time, 50.0f, 360.0f)));
+      if (index == 2) snprintf(buffer, size, "%u%%", static_cast<unsigned>(state.fx.echo.feedback * 100.0f));
+      if (index == 3) snprintf(buffer, size, "%u%%", static_cast<unsigned>((0.45f + state.fx.echo.ratio * 0.50f) * 100.0f));
+      if (index == 4) snprintf(buffer, size, "%u%%", static_cast<unsigned>(state.fx.echo.smear * 100.0f));
+      break;
+    case FxMode::REVERB:
+      if (index == 0) snprintf(buffer, size, "%u%%", static_cast<unsigned>(state.fx.reverb.mix * 100.0f));
+      if (index == 1) snprintf(buffer, size, "%u%%", static_cast<unsigned>(state.fx.reverb.size * 100.0f));
+      if (index == 2) snprintf(buffer, size, "%u%%", static_cast<unsigned>(state.fx.reverb.damping * 100.0f));
+      if (index == 3) snprintf(buffer, size, "%ums", static_cast<unsigned>(msFromNormalized(state.fx.reverb.predelay, 8.0f, 150.0f)));
+      if (index == 4) snprintf(buffer, size, "%u%%", static_cast<unsigned>(state.fx.reverb.tone * 100.0f));
+      break;
+    case FxMode::DRIVE:
+      if (index == 0) snprintf(buffer, size, "%u%%", static_cast<unsigned>(state.fx.drive.mix * 100.0f));
+      if (index == 1) snprintf(buffer, size, "x%.1f", 1.0f + (state.fx.drive.drive * 13.0f));
+      if (index == 2) snprintf(buffer, size, "%.1fk", (4.5f + state.fx.drive.tone * 18.0f));
+      if (index == 3) snprintf(buffer, size, "%ubit", static_cast<unsigned>(16 - roundf(state.fx.drive.crush * 10.0f)));
+      if (index == 4) snprintf(buffer, size, "%u%%", static_cast<unsigned>(state.fx.drive.level * 100.0f));
+      break;
+    default:
+      buffer[0] = '\0';
+      break;
+  }
+}
+
 void formatPotValue(char *buffer, size_t size, uint8_t index) {
   switch (state.ui.page) {
     case PageId::PLAY:
@@ -89,6 +140,9 @@ void formatPotValue(char *buffer, size_t size, uint8_t index) {
       if (index == 2) snprintf(buffer, size, "%u%%", static_cast<unsigned>(state.patch.glide * 100.0f));
       if (index == 3) snprintf(buffer, size, "%.1f st", 1.0f + (state.patch.bend_range * 11.0f));
       if (index == 4) snprintf(buffer, size, "%s", lfoTargetLabel(state.patch.lfo_target));
+      break;
+    case PageId::FX:
+      formatFxPotValue(buffer, size, index);
       break;
     case PageId::ARP:
       if (index == 0) snprintf(buffer, size, "%u BPM", state.transport.bpm);
@@ -135,6 +189,8 @@ const char *potName(uint8_t index) {
       return kFilterNames[index];
     case PageId::MOD:
       return kModNames[index];
+    case PageId::FX:
+      return fxPotName(index);
     case PageId::ARP:
       return kArpNames[index];
     case PageId::SEQ:
@@ -283,8 +339,8 @@ void MainMenu::render() {
 
   for (uint8_t index = 0; index < kTabCount; ++index) {
     tab_buttons_[index] = lv_button_create(tab_bar);
-    lv_obj_set_size(tab_buttons_[index], 40, 32);
-    lv_obj_set_pos(tab_buttons_[index], 12 + index * 43, 6);
+    lv_obj_set_size(tab_buttons_[index], 36, 32);
+    lv_obj_set_pos(tab_buttons_[index], 8 + index * 38, 6);
     lv_obj_add_event_cb(tab_buttons_[index], tabEventHandler, LV_EVENT_CLICKED,
                         reinterpret_cast<void *>(static_cast<uintptr_t>(index)));
     tab_labels_[index] = lv_label_create(tab_buttons_[index]);
@@ -333,6 +389,34 @@ void MainMenu::handlePotChange(uint8_t index, float value) {
       if (index == 2) state.patch.glide = value;
       if (index == 3) state.patch.bend_range = value;
       if (index == 4) state.patch.lfo_target = static_cast<LfoTarget>(discreteIndex(value, 3));
+      break;
+    case PageId::FX:
+      state.fx.enabled = true;
+      switch (state.fx.mode) {
+        case FxMode::ECHO:
+          if (index == 0) state.fx.echo.mix = value;
+          if (index == 1) state.fx.echo.time = value;
+          if (index == 2) state.fx.echo.feedback = value;
+          if (index == 3) state.fx.echo.ratio = value;
+          if (index == 4) state.fx.echo.smear = value;
+          break;
+        case FxMode::REVERB:
+          if (index == 0) state.fx.reverb.mix = value;
+          if (index == 1) state.fx.reverb.size = value;
+          if (index == 2) state.fx.reverb.damping = value;
+          if (index == 3) state.fx.reverb.predelay = value;
+          if (index == 4) state.fx.reverb.tone = value;
+          break;
+        case FxMode::DRIVE:
+          if (index == 0) state.fx.drive.mix = value;
+          if (index == 1) state.fx.drive.drive = value;
+          if (index == 2) state.fx.drive.tone = value;
+          if (index == 3) state.fx.drive.crush = value;
+          if (index == 4) state.fx.drive.level = value;
+          break;
+        default:
+          break;
+      }
       break;
     case PageId::ARP:
       if (index == 0) state.transport.bpm = bpmFromNormalized(value);
@@ -450,6 +534,9 @@ void MainMenu::refreshStatusBar() {
     snprintf(status_text, sizeof(status_text), "VOL %u%%  TUNE %s",
              static_cast<unsigned>(roundf(state.audio.output_volume * 100.0f)),
              tuningLabel(state.patch.tuning));
+  } else if (state.ui.page == PageId::FX) {
+    snprintf(status_text, sizeof(status_text), "FX %s %s", fxModeLabel(state.fx.mode),
+             yesNo(state.fx.enabled));
   } else {
     snprintf(status_text, sizeof(status_text), "%uBPM %s A:%s S:%s",
              state.transport.bpm, state.transport.running ? "RUN" : "STOP",
@@ -514,11 +601,12 @@ void MainMenu::refreshPotCards() {
 
 void MainMenu::refreshActionButtons() {
   const uint32_t accent = kPageColors[static_cast<uint8_t>(state.ui.page)];
-  static const char *kLabels[7][4] = {
+  static const char *kLabels[8][4] = {
       {"RUN/STOP", "ARP TOG", "", "PANIC"},
       {"OCT -", "OCT +", "DET 0", "NOISE 0"},
       {"SUS -", "SUS +", "SNAP", "LONG"},
       {"LFO OFF", "FILT LFO", "PITCH LFO", "DEPTH 0"},
+      {"BYPASS", "ECHO", "REVERB", "DIRT"},
       {"ENABLE", "LATCH", "RUN/STOP", "CLR HELD"},
       {"RUN/STOP", "REC ARM", "BANK", "CLEAR"},
       {"TEST PAGE", "", "", ""},
@@ -642,6 +730,21 @@ void MainMenu::handleAction(uint8_t action_index) {
       if (action_index == 1) state.patch.lfo_target = LfoTarget::FILTER;
       if (action_index == 2) state.patch.lfo_target = LfoTarget::PITCH;
       if (action_index == 3) state.patch.lfo_depth = 0.0f;
+      break;
+    case PageId::FX:
+      if (action_index == 0) state.fx.enabled = false;
+      if (action_index == 1) {
+        state.fx.enabled = true;
+        state.fx.mode = FxMode::ECHO;
+      }
+      if (action_index == 2) {
+        state.fx.enabled = true;
+        state.fx.mode = FxMode::REVERB;
+      }
+      if (action_index == 3) {
+        state.fx.enabled = true;
+        state.fx.mode = FxMode::DRIVE;
+      }
       break;
     case PageId::ARP:
       if (action_index == 0) state.arp.enabled = !state.arp.enabled;

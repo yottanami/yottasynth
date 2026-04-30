@@ -15,7 +15,7 @@ class MainMenu {
   void handleOkPress();
 
  private:
-  static constexpr uint8_t kTabCount = 7;
+  static constexpr uint8_t kTabCount = 8;
   static constexpr uint8_t kActionCount = 4;
   static constexpr uint8_t kSeqButtonCount = 8;
   static constexpr uint8_t kPotCardCount = 5;
@@ -52,8 +52,10 @@ class MainMenu {
                                                   nullptr, nullptr, nullptr, nullptr};
   lv_obj_t *seq_step_labels_[kSeqButtonCount] = {nullptr, nullptr, nullptr, nullptr,
                                                  nullptr, nullptr, nullptr, nullptr};
-  lv_obj_t *tab_buttons_[kTabCount] = {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
-  lv_obj_t *tab_labels_[kTabCount] = {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
+  lv_obj_t *tab_buttons_[kTabCount] = {nullptr, nullptr, nullptr, nullptr,
+                                       nullptr, nullptr, nullptr, nullptr};
+  lv_obj_t *tab_labels_[kTabCount] = {nullptr, nullptr, nullptr, nullptr,
+                                      nullptr, nullptr, nullptr, nullptr};
 };
 
 extern MainMenu main_menu;
