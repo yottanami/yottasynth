@@ -167,3 +167,40 @@ const char *lfoTargetLabel(LfoTarget target) {
       return "OFF";
   }
 }
+
+const char *tuningLabel(TuningId tuning) {
+  switch (tuning) {
+    case TuningId::STANDARD:
+      return "Standard";
+    case TuningId::SHUR:
+      return "Shur";
+    case TuningId::ABUATA:
+      return "Abuata";
+    case TuningId::DASHTI:
+      return "Dashti";
+    case TuningId::BAYAT_E_TORK:
+      return "Bayat-e Tork";
+    case TuningId::AFSHARI:
+      return "Afshari";
+    case TuningId::SEGAH:
+      return "Segah";
+    case TuningId::CHAHARGAH:
+      return "Chahargah";
+    case TuningId::HOMAYUN:
+      return "Homayun";
+    case TuningId::BAYAT_E_ESFAHAN:
+      return "Bayat-e Esfahan";
+    case TuningId::NAVA:
+      return "Nava";
+    case TuningId::MAHUR:
+      return "Mahur";
+    case TuningId::RAST_PANJGAH:
+      return "Rast-Panjgah";
+    default:
+      return "Standard";
+  }
+}
+
+uint8_t tuningCount() {
+  return static_cast<uint8_t>(TuningId::RAST_PANJGAH) + 1U;
+}

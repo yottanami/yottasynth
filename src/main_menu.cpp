@@ -108,6 +108,8 @@ void formatPotValue(char *buffer, size_t size, uint8_t index) {
       if (index == 0) {
         snprintf(buffer, size, "%u%%",
                  static_cast<unsigned>(roundf(state.audio.output_volume * 100.0f)));
+      } else if (index == 1) {
+        snprintf(buffer, size, "%s", tuningLabel(state.patch.tuning));
       } else {
         buffer[0] = '\0';
       }
@@ -122,7 +124,7 @@ const char *potName(uint8_t index) {
   static const char *kModNames[5] = {"RATE", "DEPTH", "GLIDE", "BEND", "TARGET"};
   static const char *kArpNames[5] = {"BPM", "DIV", "GATE", "OCT", "MODE"};
   static const char *kSeqNames[5] = {"BPM", "LEN", "SWING", "NOTE", "GATE"};
-  static const char *kSettingsNames[5] = {"VOL", "", "", "", ""};
+  static const char *kSettingsNames[5] = {"VOL", "TUNE", "", "", ""};
 
   switch (state.ui.page) {
     case PageId::PLAY:
@@ -351,6 +353,9 @@ void MainMenu::handlePotChange(uint8_t index, float value) {
         state.setOutputVolume(value);
         setOutputVolume(state.audio.output_volume);
       }
+      if (index == 1) {
+        state.patch.tuning = static_cast<TuningId>(discreteIndex(value, tuningCount()));
+      }
       break;
   }
 
@@ -441,9 +446,15 @@ void MainMenu::refreshStatusBar() {
   lv_label_set_text(status_title_label_, pageTitle(state.ui.page));
 
   char status_text[96];
-  snprintf(status_text, sizeof(status_text), "%uBPM %s A:%s S:%s",
-           state.transport.bpm, state.transport.running ? "RUN" : "STOP",
-           yesNo(state.arp.enabled), yesNo(state.sequencer.enabled));
+  if (state.ui.page == PageId::SETTINGS) {
+    snprintf(status_text, sizeof(status_text), "VOL %u%%  TUNE %s",
+             static_cast<unsigned>(roundf(state.audio.output_volume * 100.0f)),
+             tuningLabel(state.patch.tuning));
+  } else {
+    snprintf(status_text, sizeof(status_text), "%uBPM %s A:%s S:%s",
+             state.transport.bpm, state.transport.running ? "RUN" : "STOP",
+             yesNo(state.arp.enabled), yesNo(state.sequencer.enabled));
+  }
   lv_label_set_text(status_label_, status_text);
 }
 
@@ -461,6 +472,31 @@ void MainMenu::refreshTabs() {
 void MainMenu::refreshPotCards() {
   const uint32_t accent = kPageColors[static_cast<uint8_t>(state.ui.page)];
   for (uint8_t index = 0; index < kPotCardCount; ++index) {
+    if (state.ui.page == PageId::SETTINGS) {
+      if (index == 0) {
+        lv_obj_clear_flag(pot_cards_[index], LV_OBJ_FLAG_HIDDEN);
+        lv_obj_set_pos(pot_cards_[index], 0, 0);
+        lv_obj_set_size(pot_cards_[index], 68, 56);
+        lv_obj_set_width(pot_name_labels_[index], 60);
+        lv_obj_set_width(pot_value_labels_[index], 60);
+      } else if (index == 1) {
+        lv_obj_clear_flag(pot_cards_[index], LV_OBJ_FLAG_HIDDEN);
+        lv_obj_set_pos(pot_cards_[index], 72, 0);
+        lv_obj_set_size(pot_cards_[index], 236, 56);
+        lv_obj_set_width(pot_name_labels_[index], 228);
+        lv_obj_set_width(pot_value_labels_[index], 228);
+      } else {
+        lv_obj_add_flag(pot_cards_[index], LV_OBJ_FLAG_HIDDEN);
+        continue;
+      }
+    } else {
+      lv_obj_clear_flag(pot_cards_[index], LV_OBJ_FLAG_HIDDEN);
+      lv_obj_set_pos(pot_cards_[index], index * 64, 0);
+      lv_obj_set_size(pot_cards_[index], 60, 56);
+      lv_obj_set_width(pot_name_labels_[index], 54);
+      lv_obj_set_width(pot_value_labels_[index], 54);
+    }
+
     const char *name = potName(index);
     lv_label_set_text(pot_name_labels_[index], name);
     char buffer[24];

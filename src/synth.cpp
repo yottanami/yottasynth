@@ -5,27 +5,60 @@
 #include "audio_setup.h"
 
 namespace {
-constexpr float kMidiNoteFrequencies[128] = {
-    8.176f,   8.662f,   9.177f,   9.723f,   10.301f,  10.913f,  11.562f,
-    12.250f,  12.978f,  13.750f,  14.568f,  15.434f,  16.352f,  17.324f,
-    18.354f,  19.445f,  20.602f,  21.827f,  23.125f,  24.500f,  25.957f,
-    27.500f,  29.135f,  30.868f,  32.703f,  34.648f,  36.708f,  38.891f,
-    41.203f,  43.654f,  46.249f,  48.999f,  51.913f,  55.000f,  58.270f,
-    61.735f,  65.406f,  69.296f,  73.416f,  77.782f,  82.407f,  87.307f,
-    92.499f,  97.999f,  103.826f, 110.000f, 116.541f, 123.471f, 130.813f,
-    138.591f, 146.832f, 155.563f, 164.814f, 174.614f, 184.997f, 195.998f,
-    207.652f, 220.000f, 233.082f, 246.942f, 261.626f, 277.183f, 293.665f,
-    311.127f, 329.628f, 349.228f, 369.994f, 391.995f, 415.305f, 440.000f,
-    466.164f, 493.883f, 523.251f, 554.365f, 587.330f, 622.254f, 659.255f,
-    698.456f, 739.989f, 783.991f, 830.609f, 880.000f, 932.328f, 987.767f,
-    1046.502f, 1108.731f, 1174.659f, 1244.508f, 1318.510f, 1396.913f,
-    1479.978f, 1567.982f, 1661.219f, 1760.000f, 1864.655f, 1975.533f,
-    2093.005f, 2217.461f, 2349.318f, 2489.016f, 2637.020f, 2793.826f,
-    2959.955f, 3135.963f, 3322.438f, 3520.000f, 3729.310f, 3951.066f,
-    4186.009f, 4434.922f, 4698.636f, 4978.032f, 5274.041f, 5587.652f,
-    5919.911f, 6271.927f, 6644.875f, 7040.000f, 7458.620f, 7902.133f,
-    8372.018f, 8869.844f, 9397.273f, 9956.063f, 10548.080f, 11175.300f,
-    11839.820f, 12543.850f};
+constexpr float kReferenceC4Hz = 261.63f;
+constexpr float kStandardCents[12] = {0.0f,   100.0f, 200.0f, 300.0f, 400.0f, 500.0f,
+                                      600.0f, 700.0f, 800.0f, 900.0f, 1000.0f, 1100.0f};
+constexpr float kShurCents[12] = {0.0f,   100.0f, 205.0f, 300.0f, 340.0f, 500.0f,
+                                  600.0f, 700.0f, 800.0f, 905.0f, 995.0f, 1100.0f};
+constexpr float kAbuataCents[12] = {0.0f,   100.0f, 205.0f, 300.0f, 340.0f, 500.0f,
+                                    600.0f, 700.0f, 800.0f, 905.0f, 1000.0f, 1100.0f};
+constexpr float kAfshariCents[12] = {0.0f,   100.0f, 205.0f, 300.0f, 340.0f, 500.0f,
+                                     600.0f, 700.0f, 800.0f, 835.0f, 995.0f, 1100.0f};
+constexpr float kSegahCents[12] = {0.0f,   100.0f, 200.0f, 300.0f, 340.0f, 500.0f,
+                                   600.0f, 700.0f, 800.0f, 835.0f, 995.0f, 1100.0f};
+constexpr float kChahargahCents[12] = {0.0f,   100.0f, 135.0f, 300.0f, 410.0f, 500.0f,
+                                       600.0f, 700.0f, 800.0f, 835.0f, 1000.0f, 1110.0f};
+constexpr float kHomayunCents[12] = {0.0f,   100.0f, 205.0f, 300.0f, 340.0f, 500.0f,
+                                     600.0f, 700.0f, 800.0f, 835.0f, 1000.0f, 1110.0f};
+constexpr float kBayatEsfahanCents[12] = {
+    0.0f, 100.0f, 205.0f, 300.0f, 340.0f, 565.0f, 600.0f, 700.0f, 800.0f, 905.0f, 995.0f, 1100.0f};
+constexpr float kMahurCents[12] = {0.0f,   100.0f, 205.0f, 300.0f, 410.0f, 500.0f,
+                                   600.0f, 700.0f, 800.0f, 905.0f, 1000.0f, 1110.0f};
+constexpr float kRastPanjgahCents[12] = {
+    0.0f, 100.0f, 205.0f, 300.0f, 410.0f, 500.0f, 600.0f, 700.0f, 800.0f, 900.0f, 995.0f, 1100.0f};
+
+const float *tuningCents(TuningId tuning) {
+  switch (tuning) {
+    case TuningId::STANDARD:
+      return kStandardCents;
+    case TuningId::SHUR:
+      return kShurCents;
+    case TuningId::ABUATA:
+      return kAbuataCents;
+    case TuningId::DASHTI:
+      return kShurCents;
+    case TuningId::BAYAT_E_TORK:
+      return kShurCents;
+    case TuningId::AFSHARI:
+      return kAfshariCents;
+    case TuningId::SEGAH:
+      return kSegahCents;
+    case TuningId::CHAHARGAH:
+      return kChahargahCents;
+    case TuningId::HOMAYUN:
+      return kHomayunCents;
+    case TuningId::BAYAT_E_ESFAHAN:
+      return kBayatEsfahanCents;
+    case TuningId::NAVA:
+      return kShurCents;
+    case TuningId::MAHUR:
+      return kMahurCents;
+    case TuningId::RAST_PANJGAH:
+      return kRastPanjgahCents;
+    default:
+      return kStandardCents;
+  }
+}
 
 float clampUnit(float value) {
   if (value < 0.0f) {
@@ -307,10 +340,11 @@ void Synth::updateModulation() {
 }
 
 float Synth::noteToFrequency(uint8_t note) const {
-  if (note > 127) {
-    note = 127;
-  }
-  return kMidiNoteFrequencies[note];
+  const float *cents = tuningCents(patch_.tuning);
+  const uint8_t note_class = note % 12U;
+  const int octave_from_c4 = static_cast<int>(note / 12U) - 5;
+  const float octave_ratio = static_cast<float>(octave_from_c4) + (cents[note_class] / 1200.0f);
+  return kReferenceC4Hz * powf(2.0f, octave_ratio);
 }
 
 float Synth::noteWithBendToFrequency(int note_offset) const {

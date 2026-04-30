@@ -28,6 +28,22 @@ enum class ArpMode : uint8_t {
   RANDOM
 };
 
+enum class TuningId : uint8_t {
+  STANDARD = 0,
+  SHUR,
+  ABUATA,
+  DASHTI,
+  BAYAT_E_TORK,
+  AFSHARI,
+  SEGAH,
+  CHAHARGAH,
+  HOMAYUN,
+  BAYAT_E_ESFAHAN,
+  NAVA,
+  MAHUR,
+  RAST_PANJGAH
+};
+
 struct PatchState {
   float osc1_mix = 0.85f;
   float osc2_mix = 0.60f;
@@ -45,6 +61,7 @@ struct PatchState {
   LfoTarget lfo_target = LfoTarget::FILTER;
   float glide = 0.08f;
   float bend_range = 0.25f;
+  TuningId tuning = TuningId::STANDARD;
 };
 
 struct TransportState {
@@ -132,5 +149,7 @@ class AppState {
 const char *pageTitle(PageId page);
 const char *arpModeLabel(ArpMode mode);
 const char *lfoTargetLabel(LfoTarget target);
+const char *tuningLabel(TuningId tuning);
+uint8_t tuningCount();
 
 #endif
