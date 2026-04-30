@@ -165,5 +165,6 @@ extern AudioConnection          patchCord43;
 extern AudioConnection          patchCord44;
 
 bool setupAudio();
+void setOutputVolume(float volume);
 
 #endif

@@ -11,7 +11,8 @@ enum class PageId : uint8_t {
   FILTER_AMP,
   MOD,
   ARP,
-  SEQ
+  SEQ,
+  SETTINGS
 };
 
 enum class LfoTarget : uint8_t {
@@ -99,6 +100,7 @@ struct MidiStatus {
 struct AudioStatus {
   bool codec_ready = false;
   bool self_test_active = false;
+  float output_volume = 0.50f;
 };
 
 class AppState {
@@ -121,6 +123,7 @@ class AppState {
   void registerMidiNote(uint8_t note, uint8_t velocity);
   void refreshTransientStatus(unsigned long now_ms);
   void updateAudioStatus(bool codec_ready, bool self_test_active);
+  void setOutputVolume(float volume);
 
  private:
   AppState();

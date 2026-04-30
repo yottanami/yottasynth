@@ -5,6 +5,7 @@
 
 #include "input_test_page.h"
 #include "performance_engine.h"
+#include "audio_setup.h"
 #include "settings.h"
 #include "synth.h"
 
@@ -14,17 +15,17 @@ namespace {
 MainMenu *g_main_menu = nullptr;
 AppState &state = AppState::instance();
 
-constexpr PageId kPages[6] = {
+constexpr PageId kPages[7] = {
     PageId::PLAY, PageId::OSC_MIX, PageId::FILTER_AMP,
-    PageId::MOD,  PageId::ARP,     PageId::SEQ,
+    PageId::MOD,  PageId::ARP,     PageId::SEQ, PageId::SETTINGS,
 };
 
-constexpr const char *kTabTitles[6] = {
-    "PLAY", "OSC", "FILT", "MOD", "ARP", "SEQ",
+constexpr const char *kTabTitles[7] = {
+    "PLAY", "OSC", "FILT", "MOD", "ARP", "SEQ", "SET",
 };
 
-constexpr uint32_t kPageColors[6] = {
-    0x2F855A, 0x0EA5A4, 0xD97706, 0x2563EB, 0x9333EA, 0xDC2626,
+constexpr uint32_t kPageColors[7] = {
+    0x2F855A, 0x0EA5A4, 0xD97706, 0x2563EB, 0x9333EA, 0xDC2626, 0x475569,
 };
 
 float clampUnit(float value) {
@@ -135,6 +136,14 @@ void formatPotValue(char *buffer, size_t size, uint8_t index) {
       if (index == 3) snprintf(buffer, size, "%s", noteName(state.sequencer.steps[state.sequencer.selected_step].note));
       if (index == 4) snprintf(buffer, size, "%u%%", state.sequencer.steps[state.sequencer.selected_step].gate);
       break;
+    case PageId::SETTINGS:
+      if (index == 0) {
+        snprintf(buffer, size, "%u%%",
+                 static_cast<unsigned>(roundf(state.audio.output_volume * 100.0f)));
+      } else {
+        buffer[0] = '\0';
+      }
+      break;
   }
 }
 
@@ -145,6 +154,7 @@ const char *potName(uint8_t index) {
   static const char *kModNames[5] = {"RATE", "DEPTH", "GLIDE", "BEND", "TARGET"};
   static const char *kArpNames[5] = {"BPM", "DIV", "GATE", "OCT", "MODE"};
   static const char *kSeqNames[5] = {"BPM", "LEN", "SWING", "NOTE", "GATE"};
+  static const char *kSettingsNames[5] = {"VOL", "", "", "", ""};
 
   switch (state.ui.page) {
     case PageId::PLAY:
@@ -159,6 +169,8 @@ const char *potName(uint8_t index) {
       return kArpNames[index];
     case PageId::SEQ:
       return kSeqNames[index];
+    case PageId::SETTINGS:
+      return kSettingsNames[index];
     default:
       return "";
   }
@@ -307,8 +319,8 @@ void MainMenu::render() {
 
   for (uint8_t index = 0; index < kTabCount; ++index) {
     tab_buttons_[index] = lv_button_create(tab_bar);
-    lv_obj_set_size(tab_buttons_[index], 48, 32);
-    lv_obj_set_pos(tab_buttons_[index], 4 + index * 52, 6);
+    lv_obj_set_size(tab_buttons_[index], 42, 32);
+    lv_obj_set_pos(tab_buttons_[index], 4 + index * 45, 6);
     lv_obj_add_event_cb(tab_buttons_[index], tabEventHandler, LV_EVENT_CLICKED,
                         reinterpret_cast<void *>(static_cast<uintptr_t>(index)));
     tab_labels_[index] = lv_label_create(tab_buttons_[index]);
@@ -371,6 +383,12 @@ void MainMenu::handlePotChange(uint8_t index, float value) {
       if (index == 2) state.transport.swing = value * 0.9f;
       if (index == 3) setSelectedStepValue(true, value);
       if (index == 4) setSelectedStepValue(false, value);
+      break;
+    case PageId::SETTINGS:
+      if (index == 0) {
+        state.setOutputVolume(value);
+        setOutputVolume(state.audio.output_volume);
+      }
       break;
   }
 
@@ -487,14 +505,18 @@ void MainMenu::refreshTabs() {
 void MainMenu::refreshPotCards() {
   const uint32_t accent = kPageColors[static_cast<uint8_t>(state.ui.page)];
   for (uint8_t index = 0; index < kPotCardCount; ++index) {
-    lv_label_set_text(pot_name_labels_[index], potName(index));
+    const char *name = potName(index);
+    lv_label_set_text(pot_name_labels_[index], name);
     char buffer[24];
     formatPotValue(buffer, sizeof(buffer), index);
     lv_label_set_text(pot_value_labels_[index], buffer);
     lv_obj_set_style_bg_color(pot_cards_[index], lv_color_hex(accent), 0);
-    lv_obj_set_style_bg_opa(pot_cards_[index], LV_OPA_30, 0);
-    lv_obj_set_style_text_color(pot_name_labels_[index], lv_color_hex(0xE5EDF8), 0);
-    lv_obj_set_style_text_color(pot_value_labels_[index], lv_color_white(), 0);
+    const bool active = name[0] != '\0';
+    lv_obj_set_style_bg_opa(pot_cards_[index], active ? LV_OPA_30 : LV_OPA_10, 0);
+    lv_obj_set_style_text_color(pot_name_labels_[index],
+                                active ? lv_color_hex(0xE5EDF8) : lv_color_hex(0x7C8AA5), 0);
+    lv_obj_set_style_text_color(pot_value_labels_[index],
+                                active ? lv_color_white() : lv_color_hex(0x7C8AA5), 0);
   }
 }
 
@@ -508,6 +530,10 @@ void MainMenu::refreshActionButtons() {
       {"ENABLE", "LATCH", "RUN/STOP", "CLR HELD"},
       {"RUN/STOP", "REC ARM", "BANK", "CLEAR"},
   };
+  if (state.ui.page == PageId::SETTINGS) {
+    return;
+  }
+
   const uint8_t page_index = static_cast<uint8_t>(state.ui.page);
   for (uint8_t index = 0; index < kActionCount; ++index) {
     lv_label_set_text(action_labels_[index], kLabels[page_index][index]);
@@ -552,6 +578,7 @@ void MainMenu::refreshSequencerButtons() {
 
 void MainMenu::refreshVisibility() {
   const bool show_seq = state.ui.page == PageId::SEQ && !state.ui.show_input_test;
+  const bool show_settings = state.ui.page == PageId::SETTINGS && !state.ui.show_input_test;
   const bool show_input = state.ui.show_input_test;
 
   if (show_input) {
@@ -562,6 +589,14 @@ void MainMenu::refreshVisibility() {
 
   lv_obj_clear_flag(content_panel_, LV_OBJ_FLAG_HIDDEN);
   lv_obj_add_flag(input_test_panel_, LV_OBJ_FLAG_HIDDEN);
+
+  for (uint8_t index = 0; index < kActionCount; ++index) {
+    if (show_seq || show_settings) {
+      lv_obj_add_flag(action_buttons_[index], LV_OBJ_FLAG_HIDDEN);
+    } else {
+      lv_obj_clear_flag(action_buttons_[index], LV_OBJ_FLAG_HIDDEN);
+    }
+  }
 
   if (show_seq) {
     lv_obj_add_flag(pot_row_, LV_OBJ_FLAG_HIDDEN);
@@ -623,6 +658,8 @@ void MainMenu::handleAction(uint8_t action_index) {
       if (action_index == 1) state.sequencer.record_armed = !state.sequencer.record_armed;
       if (action_index == 2) state.sequencer.visible_bank ^= 1U;
       if (action_index == 3) state.ui.confirm_clear_sequence = !state.ui.confirm_clear_sequence;
+      break;
+    case PageId::SETTINGS:
       break;
   }
 

@@ -22,6 +22,18 @@ AppState &AppState::instance() {
   return state;
 }
 
+namespace {
+float clampUnit(float value) {
+  if (value < 0.0f) {
+    return 0.0f;
+  }
+  if (value > 1.0f) {
+    return 1.0f;
+  }
+  return value;
+}
+}
+
 void AppState::setPage(PageId page) {
   ui.page = page;
   ui.show_input_test = false;
@@ -49,6 +61,7 @@ Mode AppState::currentMode() const {
       return Mode::ARPEGGIATOR;
     case PageId::SEQ:
       return Mode::SEQUENCER;
+    case PageId::SETTINGS:
     case PageId::PLAY:
     case PageId::OSC_MIX:
     case PageId::FILTER_AMP:
@@ -96,6 +109,16 @@ void AppState::updateAudioStatus(bool codec_ready, bool self_test_active) {
   ui.dirty = true;
 }
 
+void AppState::setOutputVolume(float volume) {
+  const float clamped = clampUnit(volume);
+  if (audio.output_volume == clamped) {
+    return;
+  }
+
+  audio.output_volume = clamped;
+  ui.dirty = true;
+}
+
 const char *pageTitle(PageId page) {
   switch (page) {
     case PageId::PLAY:
@@ -110,6 +133,8 @@ const char *pageTitle(PageId page) {
       return "ARPEGGIATOR";
     case PageId::SEQ:
       return "SEQUENCER";
+    case PageId::SETTINGS:
+      return "SETTINGS";
     default:
       return "PLAY";
   }

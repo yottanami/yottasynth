@@ -15,7 +15,7 @@ class MainMenu {
   void handleOkPress();
 
  private:
-  static constexpr uint8_t kTabCount = 6;
+  static constexpr uint8_t kTabCount = 7;
   static constexpr uint8_t kActionCount = 4;
   static constexpr uint8_t kSeqButtonCount = 8;
   static constexpr uint8_t kPotCardCount = 5;

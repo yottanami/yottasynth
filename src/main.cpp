@@ -149,6 +149,7 @@ void setup() {
   const bool audio_codec_ready = setupAudio();
   AppState::instance().updateAudioStatus(audio_codec_ready, false);
   synth.setup();
+  setOutputVolume(AppState::instance().audio.output_volume);
   play_mode.setup();
   performance_engine.begin(&synth);
 

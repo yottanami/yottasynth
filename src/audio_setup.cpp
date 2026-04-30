@@ -164,16 +164,38 @@ AudioConnection          patchCord43(global_filter_mixer, 0, i2s1, 0);
 AudioConnection          patchCord44(global_filter_mixer, 0, i2s1, 1);
 
 
+namespace {
+bool g_audio_codec_ready = false;
+
+float clampUnit(float value) {
+  if (value < 0.0f) {
+    return 0.0f;
+  }
+  if (value > 1.0f) {
+    return 1.0f;
+  }
+  return value;
+}
+}
+
 bool setupAudio() {
   AudioMemory(30);
 
-  const bool enabled = sgtl5000_1.enable();
-  if (!enabled) {
+  g_audio_codec_ready = sgtl5000_1.enable();
+  if (!g_audio_codec_ready) {
     return false;
   }
 
-  sgtl5000_1.volume(0.70f);
+  sgtl5000_1.volume(0.50f);
   sgtl5000_1.dacVolume(1.0f);
   sgtl5000_1.lineOutLevel(29);
   return true;
+}
+
+void setOutputVolume(float volume) {
+  if (!g_audio_codec_ready) {
+    return;
+  }
+
+  sgtl5000_1.volume(clampUnit(volume));
 }
