@@ -184,6 +184,21 @@ const char *lfoTargetLabel(LfoTarget target) {
   }
 }
 
+const char *oscWaveLabel(OscWave wave) {
+  switch (wave) {
+    case OscWave::SAW:
+      return "SAW";
+    case OscWave::SINE:
+      return "SINE";
+    case OscWave::SQUARE:
+      return "SQR";
+    case OscWave::TRIANGLE:
+      return "TRI";
+    default:
+      return "SAW";
+  }
+}
+
 const char *tuningLabel(TuningId tuning) {
   switch (tuning) {
     case TuningId::STANDARD:

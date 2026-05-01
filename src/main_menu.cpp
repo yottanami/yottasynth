@@ -61,6 +61,34 @@ const char *yesNo(bool value) {
   return value ? "ON" : "OFF";
 }
 
+OscWave nextOscWave(OscWave wave) {
+  switch (wave) {
+    case OscWave::SAW:
+      return OscWave::SINE;
+    case OscWave::SINE:
+      return OscWave::SQUARE;
+    case OscWave::SQUARE:
+      return OscWave::TRIANGLE;
+    case OscWave::TRIANGLE:
+    default:
+      return OscWave::SAW;
+  }
+}
+
+OscWave previousOscWave(OscWave wave) {
+  switch (wave) {
+    case OscWave::SAW:
+      return OscWave::TRIANGLE;
+    case OscWave::SINE:
+      return OscWave::SAW;
+    case OscWave::SQUARE:
+      return OscWave::SINE;
+    case OscWave::TRIANGLE:
+    default:
+      return OscWave::SQUARE;
+  }
+}
+
 float msFromNormalized(float normalized, float min_ms, float max_ms) {
   return min_ms + (clampUnit(normalized) * (max_ms - min_ms));
 }
@@ -534,6 +562,10 @@ void MainMenu::refreshStatusBar() {
     snprintf(status_text, sizeof(status_text), "VOL %u%%  TUNE %s",
              static_cast<unsigned>(roundf(state.audio.output_volume * 100.0f)),
              tuningLabel(state.patch.tuning));
+  } else if (state.ui.page == PageId::OSC_MIX) {
+    snprintf(status_text, sizeof(status_text), "W1 %s  W2 %s  N %u%%",
+             oscWaveLabel(state.patch.osc1_wave), oscWaveLabel(state.patch.osc2_wave),
+             static_cast<unsigned>(state.patch.noise_mix * 100.0f));
   } else if (state.ui.page == PageId::FX) {
     snprintf(status_text, sizeof(status_text), "FX %s %s", fxModeLabel(state.fx.mode),
              yesNo(state.fx.enabled));
@@ -603,7 +635,7 @@ void MainMenu::refreshActionButtons() {
   const uint32_t accent = kPageColors[static_cast<uint8_t>(state.ui.page)];
   static const char *kLabels[8][4] = {
       {"RUN/STOP", "ARP TOG", "", "PANIC"},
-      {"OCT -", "OCT +", "DET 0", "NOISE 0"},
+      {"W1 <", "W1 >", "W2 <", "W2 >"},
       {"SUS -", "SUS +", "SNAP", "LONG"},
       {"LFO OFF", "FILT LFO", "PITCH LFO", "DEPTH 0"},
       {"BYPASS", "ECHO", "REVERB", "DIRT"},
@@ -706,10 +738,10 @@ void MainMenu::handleAction(uint8_t action_index) {
       if (action_index == 3) performance_engine.stopTransport();
       break;
     case PageId::OSC_MIX:
-      if (action_index == 0 && state.patch.octave_index > 0) --state.patch.octave_index;
-      if (action_index == 1 && state.patch.octave_index < 4) ++state.patch.octave_index;
-      if (action_index == 2) state.patch.detune = 0.5f;
-      if (action_index == 3) state.patch.noise_mix = 0.0f;
+      if (action_index == 0) state.patch.osc1_wave = previousOscWave(state.patch.osc1_wave);
+      if (action_index == 1) state.patch.osc1_wave = nextOscWave(state.patch.osc1_wave);
+      if (action_index == 2) state.patch.osc2_wave = previousOscWave(state.patch.osc2_wave);
+      if (action_index == 3) state.patch.osc2_wave = nextOscWave(state.patch.osc2_wave);
       break;
     case PageId::FILTER_AMP:
       if (action_index == 0) state.patch.sustain = max(0.0f, state.patch.sustain - 0.05f);

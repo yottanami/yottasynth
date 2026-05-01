@@ -84,10 +84,9 @@ Synth::Synth(AudioSynthWaveform *waveform1,
 }
 
 void Synth::setup() {
-  waveform1_->begin(WAVEFORM_SAWTOOTH);
   waveform1_->pulseWidth(0.50f);
-  waveform2_->begin(WAVEFORM_SAWTOOTH);
   waveform2_->pulseWidth(0.35f);
+  applyOscillatorWaveforms(true);
 
   lead_mixer.gain(0, patch_.osc1_mix);
   lead_mixer.gain(1, patch_.osc2_mix);
@@ -150,10 +149,16 @@ void Synth::loop() {
 }
 
 void Synth::applyPatch(const PatchState &patch) {
+  const bool waveform_changed =
+      patch_.osc1_wave != patch.osc1_wave || patch_.osc2_wave != patch.osc2_wave;
   patch_ = patch;
 
   if (self_test_active_) {
     return;
+  }
+
+  if (waveform_changed) {
+    applyOscillatorWaveforms(false);
   }
 
   lead_mixer.gain(0, clampUnit(patch_.osc1_mix));
@@ -276,10 +281,9 @@ void Synth::stopSelfTest() {
   waveform2_->amplitude(0.0f);
   pink_->amplitude(0.0f);
 
-  waveform1_->begin(WAVEFORM_SAWTOOTH);
-  waveform2_->begin(WAVEFORM_SAWTOOTH);
   waveform1_->pulseWidth(0.50f);
   waveform2_->pulseWidth(0.35f);
+  applyOscillatorWaveforms(true);
   applyPatch(patch_);
 }
 
@@ -336,6 +340,33 @@ void Synth::updateModulation() {
     filter_->frequency(normalizedToFilterHz(patch_.cutoff + filter_lfo_value_));
   } else {
     filter_lfo_value_ = 0.0f;
+  }
+}
+
+void Synth::applyOscillatorWaveforms(bool force) {
+  if (force || applied_waveform1_ != patch_.osc1_wave) {
+    waveform1_->begin(waveformConstant(patch_.osc1_wave));
+    applied_waveform1_ = patch_.osc1_wave;
+  }
+
+  if (force || applied_waveform2_ != patch_.osc2_wave) {
+    waveform2_->begin(waveformConstant(patch_.osc2_wave));
+    applied_waveform2_ = patch_.osc2_wave;
+  }
+}
+
+int Synth::waveformConstant(OscWave wave) const {
+  switch (wave) {
+    case OscWave::SAW:
+      return WAVEFORM_SAWTOOTH;
+    case OscWave::SINE:
+      return WAVEFORM_SINE;
+    case OscWave::SQUARE:
+      return WAVEFORM_SQUARE;
+    case OscWave::TRIANGLE:
+      return WAVEFORM_TRIANGLE;
+    default:
+      return WAVEFORM_SAWTOOTH;
   }
 }
 

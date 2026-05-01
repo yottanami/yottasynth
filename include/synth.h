@@ -30,6 +30,8 @@ class Synth {
   void retriggerCurrentNote();
   void refreshVoices(bool immediate);
   void updateModulation();
+  void applyOscillatorWaveforms(bool force);
+  int waveformConstant(OscWave wave) const;
   float noteToFrequency(uint8_t note) const;
   float noteWithBendToFrequency(int note_offset) const;
   float pitchLfoMultiplier() const;
@@ -54,6 +56,8 @@ class Synth {
   float target_freq2_ = 0.0f;
   unsigned long last_update_us_ = 0;
   float lfo_phase_ = 0.0f;
+  OscWave applied_waveform1_ = OscWave::SAW;
+  OscWave applied_waveform2_ = OscWave::SAW;
   bool self_test_active_ = false;
   unsigned long self_test_started_ms_ = 0;
 };

@@ -22,6 +22,13 @@ enum class LfoTarget : uint8_t {
   PITCH
 };
 
+enum class OscWave : uint8_t {
+  SAW = 0,
+  SINE,
+  SQUARE,
+  TRIANGLE
+};
+
 enum class ArpMode : uint8_t {
   UP = 0,
   DOWN,
@@ -54,6 +61,8 @@ enum class TuningId : uint8_t {
 struct PatchState {
   float osc1_mix = 0.85f;
   float osc2_mix = 0.60f;
+  OscWave osc1_wave = OscWave::SAW;
+  OscWave osc2_wave = OscWave::SAW;
   float noise_mix = 0.05f;
   int8_t octave_index = 2;
   float detune = 0.08f;
@@ -190,6 +199,7 @@ const char *pageTitle(PageId page);
 const char *arpModeLabel(ArpMode mode);
 const char *fxModeLabel(FxMode mode);
 const char *lfoTargetLabel(LfoTarget target);
+const char *oscWaveLabel(OscWave wave);
 const char *tuningLabel(TuningId tuning);
 uint8_t tuningCount();
 
