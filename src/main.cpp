@@ -83,13 +83,27 @@ void print_logs(lv_log_level_t level, const char *buffer) {
 void my_touchpad_read(lv_indev_t *indev, lv_indev_data_t *data) {
   LV_UNUSED(indev);
 
-  const bool irq_active = digitalRead(kTouchIrqPin) == LOW;
+  const bool irq_active = ts.tirqTouched();
+  if (!irq_active) {
+    if (touch_confirmed && touch_release_streak + 1U < kTouchReleaseCount) {
+      ++touch_release_streak;
+      input_test_page.updateTouch(true, last_touch_x, last_touch_y, last_raw_touch_x,
+                                  last_raw_touch_y, last_raw_touch_z);
+      data->state = LV_INDEV_STATE_PRESSED;
+      data->point.x = last_touch_x;
+      data->point.y = last_touch_y;
+      return;
+    }
+
+    releaseTouch(data, true);
+    return;
+  }
+
   const TS_Point p = ts.getPoint();
   const int16_t pressure_threshold =
       touch_confirmed ? kTouchPressureRelease : kTouchPressurePress;
   const bool valid_touch =
-      touchPointInRange(p) && p.z >= pressure_threshold &&
-      (irq_active || p.z >= kTouchPressurePress);
+      touchPointInRange(p) && p.z >= pressure_threshold;
   if (!valid_touch) {
     if (touch_confirmed && touch_release_streak + 1U < kTouchReleaseCount) {
       ++touch_release_streak;

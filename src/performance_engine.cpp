@@ -184,7 +184,9 @@ void PerformanceEngine::advanceTransportStep() {
 
   state_->transport.step_index =
       static_cast<uint8_t>((current_step + 1U) % clampStepLength(state_->sequencer.length));
-  state_->markDirty();
+  if (state_->ui.page == PageId::SEQ) {
+    state_->markDirty();
+  }
 }
 
 void PerformanceEngine::handleSequencerStep() {
