@@ -35,19 +35,19 @@ The current firmware is a playable mono synth instrument with:
 
 The current tuning list includes:
 
-- `Standard`
-- `Shur`
-- `Abuata`
-- `Dashti`
-- `Bayat-e Tork`
-- `Afshari`
-- `Segah`
-- `Chahargah`
-- `Homayun`
-- `Bayat-e Esfahan`
-- `Nava`
-- `Mahur`
-- `Rast-Panjgah`
+- `Standard` (`استاندارد`)
+- `Shur` (`شور`)
+- `Abuata` (`ابوعطا`)
+- `Dashti` (`دشتی`)
+- `Bayat-e Tork` (`بیات ترک`)
+- `Afshari` (`افشاری`)
+- `Segah` (`سه‌گاه`)
+- `Chahargah` (`چهارگاه`)
+- `Homayun` (`همایون`)
+- `Bayat-e Esfahan` (`بیات اصفهان`)
+- `Nava` (`نوا`)
+- `Mahur` (`ماهور`)
+- `Rast-Panjgah` (`راست‌پنجگاه`)
 
 ## How It Works
 
