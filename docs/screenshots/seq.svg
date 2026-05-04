@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="960" viewBox="0 0 320 240">
+<rect x="0" y="0" width="320" height="240" fill="#09111F" />
+<rect x="0" y="0" width="320" height="46" fill="#111C2E" />
+<text x="10" y="16" fill="#FFFFFF" font-size="14" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="start">SEQUENCER</text>
+<text x="10" y="36" fill="#D5E1F5" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="500" text-anchor="start">118BPM RUN A:OFF S:ON</text>
+<rect x="0" y="46" width="320" height="150" fill="#0D1628" />
+<text x="6" y="58" fill="#D5E1F5" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="500" text-anchor="start">STEP 06 E4 G72 B1</text>
+<rect x="6" y="80" width="72" height="34" fill="#C2410C" rx="8" ry="8" />
+<text x="42" y="101" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">01 C4</text>
+<rect x="82" y="80" width="72" height="34" fill="#C2410C" rx="8" ry="8" />
+<text x="118" y="101" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">02 D4</text>
+<rect x="158" y="80" width="72" height="34" fill="#C2410C" rx="8" ry="8" />
+<text x="194" y="101" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">03 G4</text>
+<rect x="234" y="80" width="72" height="34" fill="#1A2740" rx="8" ry="8" />
+<text x="270" y="101" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">04 --</text>
+<rect x="6" y="116" width="72" height="34" fill="#C2410C" rx="8" ry="8" />
+<text x="42" y="137" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">05 C4</text>
+<rect x="82" y="116" width="72" height="34" fill="#2563EB" rx="8" ry="8" />
+<text x="118" y="137" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">06 E4</text>
+<rect x="158" y="116" width="72" height="34" fill="#16A34A" rx="8" ry="8" />
+<text x="194" y="137" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">07 A4</text>
+<rect x="234" y="116" width="72" height="34" fill="#1A2740" rx="8" ry="8" />
+<text x="270" y="137" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">08 --</text>
+<rect x="10" y="156" width="72" height="24" fill="#DC2626" rx="8" ry="8" fill-opacity="0.400" />
+<text x="46.0" y="172" fill="#FFFFFF" font-size="8" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">RUN/STOP</text>
+<rect x="86" y="156" width="72" height="24" fill="#DC2626" rx="8" ry="8" fill-opacity="0.400" />
+<text x="122.0" y="172" fill="#FFFFFF" font-size="8" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">REC ARM</text>
+<rect x="162" y="156" width="72" height="24" fill="#DC2626" rx="8" ry="8" fill-opacity="0.400" />
+<text x="198.0" y="172" fill="#FFFFFF" font-size="8" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">BANK</text>
+<rect x="238" y="156" width="72" height="24" fill="#DC2626" rx="8" ry="8" fill-opacity="0.400" />
+<text x="274.0" y="172" fill="#FFFFFF" font-size="8" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">CLEAR</text>
+<rect x="0" y="196" width="320" height="44" fill="#111C2E" />
+<rect x="8" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="26" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">PLAY</text>
+<rect x="46" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="64" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">OSC</text>
+<rect x="84" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="102" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">FILT</text>
+<rect x="122" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="140" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">MOD</text>
+<rect x="160" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="178" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">FX</text>
+<rect x="198" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="216" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">ARP</text>
+<rect x="236" y="202" width="36" height="32" fill="#DC2626" rx="7" ry="7" />
+<text x="254" y="222" fill="#FFFFFF" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">SEQ</text>
+<rect x="274" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="292" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">SET</text>
+<rect x="0.5" y="0.5" width="319" height="239" fill="none" stroke="#273449" stroke-width="1" />
+</svg>

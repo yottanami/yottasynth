@@ -1,0 +1,392 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="3008" height="5072" viewBox="0 0 752 1268">
+<rect x="0" y="0" width="752" height="1268" fill="#0B1220" />
+<text x="24" y="42" fill="#FFFFFF" font-size="18" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="start">Yottasynth Interface Overview</text>
+<text x="24" y="64" fill="#D5E1F5" font-size="11" font-family="Arial, Helvetica, sans-serif" font-weight="500" text-anchor="start">Generated UI pages from the current firmware layout</text>
+<rect x="24" y="68" width="340" height="280" fill="#121B2D" rx="14" ry="14" stroke="#273449" stroke-width="1" />
+<rect x="34" y="78" width="320" height="240" fill="#09111F" rx="10" ry="10" />
+<g transform="translate(34,78)"><rect x="0" y="0" width="320" height="240" fill="#09111F" />
+<rect x="0" y="0" width="320" height="46" fill="#111C2E" />
+<text x="10" y="16" fill="#FFFFFF" font-size="14" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="start">PLAY</text>
+<text x="10" y="36" fill="#D5E1F5" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="500" text-anchor="start">126BPM RUN A:ON S:OFF</text>
+<rect x="0" y="46" width="320" height="150" fill="#0D1628" />
+<rect x="-9" y="54" width="316" height="56" fill="#000000" fill-opacity="0.000" />
+<rect x="0" y="54" width="60" height="56" fill="#2F855A" rx="12" ry="12" fill-opacity="0.300" />
+<text x="30.0" y="72" fill="#E5EDF8" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">CUT</text>
+<text x="30.0" y="101" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="600" text-anchor="middle">8100 Hz</text>
+<rect x="64" y="54" width="60" height="56" fill="#2F855A" rx="12" ry="12" fill-opacity="0.300" />
+<text x="94.0" y="72" fill="#E5EDF8" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">RES</text>
+<text x="94.0" y="101" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="600" text-anchor="middle">2.2</text>
+<rect x="128" y="54" width="60" height="56" fill="#2F855A" rx="12" ry="12" fill-opacity="0.300" />
+<text x="158.0" y="72" fill="#E5EDF8" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">GLIDE</text>
+<text x="158.0" y="101" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="600" text-anchor="middle">18%</text>
+<rect x="192" y="54" width="60" height="56" fill="#2F855A" rx="12" ry="12" fill-opacity="0.300" />
+<text x="222.0" y="72" fill="#E5EDF8" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">A-GATE</text>
+<text x="222.0" y="101" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="600" text-anchor="middle">78%</text>
+<rect x="256" y="54" width="60" height="56" fill="#2F855A" rx="12" ry="12" fill-opacity="0.300" />
+<text x="286.0" y="72" fill="#E5EDF8" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">BPM</text>
+<text x="286.0" y="101" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="600" text-anchor="middle">126 BPM</text>
+<rect x="6" y="116" width="145" height="26" fill="#2F855A" rx="8" ry="8" fill-opacity="0.400" />
+<text x="78.5" y="132" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">RUN/STOP</text>
+<rect x="153" y="116" width="145" height="26" fill="#2F855A" rx="8" ry="8" fill-opacity="0.400" />
+<text x="225.5" y="132" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">ARP TOG</text>
+<rect x="6" y="148" width="145" height="26" fill="#2F855A" rx="8" ry="8" fill-opacity="0.400" />
+<text x="78.5" y="164" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle"></text>
+<rect x="153" y="148" width="145" height="26" fill="#2F855A" rx="8" ry="8" fill-opacity="0.400" />
+<text x="225.5" y="164" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">PANIC</text>
+<rect x="0" y="196" width="320" height="44" fill="#111C2E" />
+<rect x="8" y="202" width="36" height="32" fill="#2F855A" rx="7" ry="7" />
+<text x="26" y="222" fill="#FFFFFF" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">PLAY</text>
+<rect x="46" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="64" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">OSC</text>
+<rect x="84" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="102" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">FILT</text>
+<rect x="122" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="140" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">MOD</text>
+<rect x="160" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="178" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">FX</text>
+<rect x="198" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="216" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">ARP</text>
+<rect x="236" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="254" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">SEQ</text>
+<rect x="274" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="292" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">SET</text>
+<rect x="0.5" y="0.5" width="319" height="239" fill="none" stroke="#273449" stroke-width="1" /></g>
+<text x="194.0" y="334" fill="#D5E1F5" font-size="11" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">PLAY</text>
+<rect x="388" y="68" width="340" height="280" fill="#121B2D" rx="14" ry="14" stroke="#273449" stroke-width="1" />
+<rect x="398" y="78" width="320" height="240" fill="#09111F" rx="10" ry="10" />
+<g transform="translate(398,78)"><rect x="0" y="0" width="320" height="240" fill="#09111F" />
+<rect x="0" y="0" width="320" height="46" fill="#111C2E" />
+<text x="10" y="16" fill="#FFFFFF" font-size="14" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="start">OSC / MIX</text>
+<text x="10" y="36" fill="#D5E1F5" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="500" text-anchor="start">W1 SAW  W2 SQR  N 12%</text>
+<rect x="0" y="46" width="320" height="150" fill="#0D1628" />
+<rect x="-9" y="54" width="316" height="56" fill="#000000" fill-opacity="0.000" />
+<rect x="0" y="54" width="60" height="56" fill="#0EA5A4" rx="12" ry="12" fill-opacity="0.300" />
+<text x="30.0" y="72" fill="#E5EDF8" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">OSC1</text>
+<text x="30.0" y="101" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="600" text-anchor="middle">92%</text>
+<rect x="64" y="54" width="60" height="56" fill="#0EA5A4" rx="12" ry="12" fill-opacity="0.300" />
+<text x="94.0" y="72" fill="#E5EDF8" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">OSC2</text>
+<text x="94.0" y="101" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="600" text-anchor="middle">54%</text>
+<rect x="128" y="54" width="60" height="56" fill="#0EA5A4" rx="12" ry="12" fill-opacity="0.300" />
+<text x="158.0" y="72" fill="#E5EDF8" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">NOISE</text>
+<text x="158.0" y="101" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="600" text-anchor="middle">12%</text>
+<rect x="192" y="54" width="60" height="56" fill="#0EA5A4" rx="12" ry="12" fill-opacity="0.300" />
+<text x="222.0" y="72" fill="#E5EDF8" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">OCT</text>
+<text x="222.0" y="101" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="600" text-anchor="middle">+12 st</text>
+<rect x="256" y="54" width="60" height="56" fill="#0EA5A4" rx="12" ry="12" fill-opacity="0.300" />
+<text x="286.0" y="72" fill="#E5EDF8" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">DETUNE</text>
+<text x="286.0" y="101" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="600" text-anchor="middle">0.96</text>
+<rect x="6" y="116" width="145" height="26" fill="#0EA5A4" rx="8" ry="8" fill-opacity="0.400" />
+<text x="78.5" y="132" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">W1 &lt;</text>
+<rect x="153" y="116" width="145" height="26" fill="#0EA5A4" rx="8" ry="8" fill-opacity="0.400" />
+<text x="225.5" y="132" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">W1 &gt;</text>
+<rect x="6" y="148" width="145" height="26" fill="#0EA5A4" rx="8" ry="8" fill-opacity="0.400" />
+<text x="78.5" y="164" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">W2 &lt;</text>
+<rect x="153" y="148" width="145" height="26" fill="#0EA5A4" rx="8" ry="8" fill-opacity="0.400" />
+<text x="225.5" y="164" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">W2 &gt;</text>
+<rect x="0" y="196" width="320" height="44" fill="#111C2E" />
+<rect x="8" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="26" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">PLAY</text>
+<rect x="46" y="202" width="36" height="32" fill="#0EA5A4" rx="7" ry="7" />
+<text x="64" y="222" fill="#FFFFFF" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">OSC</text>
+<rect x="84" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="102" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">FILT</text>
+<rect x="122" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="140" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">MOD</text>
+<rect x="160" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="178" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">FX</text>
+<rect x="198" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="216" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">ARP</text>
+<rect x="236" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="254" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">SEQ</text>
+<rect x="274" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="292" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">SET</text>
+<rect x="0.5" y="0.5" width="319" height="239" fill="none" stroke="#273449" stroke-width="1" /></g>
+<text x="558.0" y="334" fill="#D5E1F5" font-size="11" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">OSC / MIX</text>
+<rect x="24" y="372" width="340" height="280" fill="#121B2D" rx="14" ry="14" stroke="#273449" stroke-width="1" />
+<rect x="34" y="382" width="320" height="240" fill="#09111F" rx="10" ry="10" />
+<g transform="translate(34,382)"><rect x="0" y="0" width="320" height="240" fill="#09111F" />
+<rect x="0" y="0" width="320" height="46" fill="#111C2E" />
+<text x="10" y="16" fill="#FFFFFF" font-size="14" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="start">FILTER / AMP</text>
+<text x="10" y="36" fill="#D5E1F5" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="500" text-anchor="start">120BPM STOP A:OFF S:OFF</text>
+<rect x="0" y="46" width="320" height="150" fill="#0D1628" />
+<rect x="-9" y="54" width="316" height="56" fill="#000000" fill-opacity="0.000" />
+<rect x="0" y="54" width="60" height="56" fill="#D97706" rx="12" ry="12" fill-opacity="0.300" />
+<text x="30.0" y="72" fill="#E5EDF8" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">CUT</text>
+<text x="30.0" y="101" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="600" text-anchor="middle">58%</text>
+<rect x="64" y="54" width="60" height="56" fill="#D97706" rx="12" ry="12" fill-opacity="0.300" />
+<text x="94.0" y="72" fill="#E5EDF8" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">RES</text>
+<text x="94.0" y="101" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="600" text-anchor="middle">47%</text>
+<rect x="128" y="54" width="60" height="56" fill="#D97706" rx="12" ry="12" fill-opacity="0.300" />
+<text x="158.0" y="72" fill="#E5EDF8" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">ATT</text>
+<text x="158.0" y="101" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="600" text-anchor="middle">305ms</text>
+<rect x="192" y="54" width="60" height="56" fill="#D97706" rx="12" ry="12" fill-opacity="0.300" />
+<text x="222.0" y="72" fill="#E5EDF8" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">DEC</text>
+<text x="222.0" y="101" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="600" text-anchor="middle">860ms</text>
+<rect x="256" y="54" width="60" height="56" fill="#D97706" rx="12" ry="12" fill-opacity="0.300" />
+<text x="286.0" y="72" fill="#E5EDF8" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">REL</text>
+<text x="286.0" y="101" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="600" text-anchor="middle">1182ms</text>
+<rect x="6" y="116" width="145" height="26" fill="#D97706" rx="8" ry="8" fill-opacity="0.400" />
+<text x="78.5" y="132" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">SUS -</text>
+<rect x="153" y="116" width="145" height="26" fill="#D97706" rx="8" ry="8" fill-opacity="0.400" />
+<text x="225.5" y="132" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">SUS +</text>
+<rect x="6" y="148" width="145" height="26" fill="#D97706" rx="8" ry="8" fill-opacity="0.400" />
+<text x="78.5" y="164" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">SNAP</text>
+<rect x="153" y="148" width="145" height="26" fill="#D97706" rx="8" ry="8" fill-opacity="0.400" />
+<text x="225.5" y="164" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">LONG</text>
+<rect x="0" y="196" width="320" height="44" fill="#111C2E" />
+<rect x="8" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="26" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">PLAY</text>
+<rect x="46" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="64" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">OSC</text>
+<rect x="84" y="202" width="36" height="32" fill="#D97706" rx="7" ry="7" />
+<text x="102" y="222" fill="#FFFFFF" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">FILT</text>
+<rect x="122" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="140" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">MOD</text>
+<rect x="160" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="178" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">FX</text>
+<rect x="198" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="216" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">ARP</text>
+<rect x="236" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="254" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">SEQ</text>
+<rect x="274" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="292" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">SET</text>
+<rect x="0.5" y="0.5" width="319" height="239" fill="none" stroke="#273449" stroke-width="1" /></g>
+<text x="194.0" y="638" fill="#D5E1F5" font-size="11" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">FILTER / AMP</text>
+<rect x="388" y="372" width="340" height="280" fill="#121B2D" rx="14" ry="14" stroke="#273449" stroke-width="1" />
+<rect x="398" y="382" width="320" height="240" fill="#09111F" rx="10" ry="10" />
+<g transform="translate(398,382)"><rect x="0" y="0" width="320" height="240" fill="#09111F" />
+<rect x="0" y="0" width="320" height="46" fill="#111C2E" />
+<text x="10" y="16" fill="#FFFFFF" font-size="14" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="start">MOD</text>
+<text x="10" y="36" fill="#D5E1F5" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="500" text-anchor="start">120BPM STOP A:OFF S:OFF</text>
+<rect x="0" y="46" width="320" height="150" fill="#0D1628" />
+<rect x="-9" y="54" width="316" height="56" fill="#000000" fill-opacity="0.000" />
+<rect x="0" y="54" width="60" height="56" fill="#2563EB" rx="12" ry="12" fill-opacity="0.300" />
+<text x="30.0" y="72" fill="#E5EDF8" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">RATE</text>
+<text x="30.0" y="101" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="600" text-anchor="middle">5.0 Hz</text>
+<rect x="64" y="54" width="60" height="56" fill="#2563EB" rx="12" ry="12" fill-opacity="0.300" />
+<text x="94.0" y="72" fill="#E5EDF8" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">DEPTH</text>
+<text x="94.0" y="101" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="600" text-anchor="middle">41%</text>
+<rect x="128" y="54" width="60" height="56" fill="#2563EB" rx="12" ry="12" fill-opacity="0.300" />
+<text x="158.0" y="72" fill="#E5EDF8" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">GLIDE</text>
+<text x="158.0" y="101" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="600" text-anchor="middle">11%</text>
+<rect x="192" y="54" width="60" height="56" fill="#2563EB" rx="12" ry="12" fill-opacity="0.300" />
+<text x="222.0" y="72" fill="#E5EDF8" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">BEND</text>
+<text x="222.0" y="101" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="600" text-anchor="middle">7.1 st</text>
+<rect x="256" y="54" width="60" height="56" fill="#2563EB" rx="12" ry="12" fill-opacity="0.300" />
+<text x="286.0" y="72" fill="#E5EDF8" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">TARGET</text>
+<text x="286.0" y="101" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="600" text-anchor="middle">PITCH</text>
+<rect x="6" y="116" width="145" height="26" fill="#2563EB" rx="8" ry="8" fill-opacity="0.400" />
+<text x="78.5" y="132" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">LFO OFF</text>
+<rect x="153" y="116" width="145" height="26" fill="#2563EB" rx="8" ry="8" fill-opacity="0.400" />
+<text x="225.5" y="132" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">FILT LFO</text>
+<rect x="6" y="148" width="145" height="26" fill="#2563EB" rx="8" ry="8" fill-opacity="0.400" />
+<text x="78.5" y="164" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">PITCH LFO</text>
+<rect x="153" y="148" width="145" height="26" fill="#2563EB" rx="8" ry="8" fill-opacity="0.400" />
+<text x="225.5" y="164" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">DEPTH 0</text>
+<rect x="0" y="196" width="320" height="44" fill="#111C2E" />
+<rect x="8" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="26" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">PLAY</text>
+<rect x="46" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="64" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">OSC</text>
+<rect x="84" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="102" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">FILT</text>
+<rect x="122" y="202" width="36" height="32" fill="#2563EB" rx="7" ry="7" />
+<text x="140" y="222" fill="#FFFFFF" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">MOD</text>
+<rect x="160" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="178" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">FX</text>
+<rect x="198" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="216" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">ARP</text>
+<rect x="236" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="254" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">SEQ</text>
+<rect x="274" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="292" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">SET</text>
+<rect x="0.5" y="0.5" width="319" height="239" fill="none" stroke="#273449" stroke-width="1" /></g>
+<text x="558.0" y="638" fill="#D5E1F5" font-size="11" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">MOD</text>
+<rect x="24" y="676" width="340" height="280" fill="#121B2D" rx="14" ry="14" stroke="#273449" stroke-width="1" />
+<rect x="34" y="686" width="320" height="240" fill="#09111F" rx="10" ry="10" />
+<g transform="translate(34,686)"><rect x="0" y="0" width="320" height="240" fill="#09111F" />
+<rect x="0" y="0" width="320" height="46" fill="#111C2E" />
+<text x="10" y="16" fill="#FFFFFF" font-size="14" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="start">FX</text>
+<text x="10" y="36" fill="#D5E1F5" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="500" text-anchor="start">FX REVERB ON</text>
+<rect x="0" y="46" width="320" height="150" fill="#0D1628" />
+<rect x="-9" y="54" width="316" height="56" fill="#000000" fill-opacity="0.000" />
+<rect x="0" y="54" width="60" height="56" fill="#7C3AED" rx="12" ry="12" fill-opacity="0.300" />
+<text x="30.0" y="72" fill="#E5EDF8" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">MIX</text>
+<text x="30.0" y="101" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="600" text-anchor="middle">35%</text>
+<rect x="64" y="54" width="60" height="56" fill="#7C3AED" rx="12" ry="12" fill-opacity="0.300" />
+<text x="94.0" y="72" fill="#E5EDF8" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">SIZE</text>
+<text x="94.0" y="101" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="600" text-anchor="middle">68%</text>
+<rect x="128" y="54" width="60" height="56" fill="#7C3AED" rx="12" ry="12" fill-opacity="0.300" />
+<text x="158.0" y="72" fill="#E5EDF8" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">DAMP</text>
+<text x="158.0" y="101" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="600" text-anchor="middle">31%</text>
+<rect x="192" y="54" width="60" height="56" fill="#7C3AED" rx="12" ry="12" fill-opacity="0.300" />
+<text x="222.0" y="72" fill="#E5EDF8" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">PRE</text>
+<text x="222.0" y="101" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="600" text-anchor="middle">45ms</text>
+<rect x="256" y="54" width="60" height="56" fill="#7C3AED" rx="12" ry="12" fill-opacity="0.300" />
+<text x="286.0" y="72" fill="#E5EDF8" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">TONE</text>
+<text x="286.0" y="101" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="600" text-anchor="middle">73%</text>
+<rect x="6" y="116" width="145" height="26" fill="#7C3AED" rx="8" ry="8" fill-opacity="0.400" />
+<text x="78.5" y="132" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">BYPASS</text>
+<rect x="153" y="116" width="145" height="26" fill="#7C3AED" rx="8" ry="8" fill-opacity="0.400" />
+<text x="225.5" y="132" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">ECHO</text>
+<rect x="6" y="148" width="145" height="26" fill="#7C3AED" rx="8" ry="8" fill-opacity="0.400" />
+<text x="78.5" y="164" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">REVERB</text>
+<rect x="153" y="148" width="145" height="26" fill="#7C3AED" rx="8" ry="8" fill-opacity="0.400" />
+<text x="225.5" y="164" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">DIRT</text>
+<rect x="0" y="196" width="320" height="44" fill="#111C2E" />
+<rect x="8" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="26" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">PLAY</text>
+<rect x="46" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="64" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">OSC</text>
+<rect x="84" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="102" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">FILT</text>
+<rect x="122" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="140" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">MOD</text>
+<rect x="160" y="202" width="36" height="32" fill="#7C3AED" rx="7" ry="7" />
+<text x="178" y="222" fill="#FFFFFF" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">FX</text>
+<rect x="198" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="216" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">ARP</text>
+<rect x="236" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="254" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">SEQ</text>
+<rect x="274" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="292" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">SET</text>
+<rect x="0.5" y="0.5" width="319" height="239" fill="none" stroke="#273449" stroke-width="1" /></g>
+<text x="194.0" y="942" fill="#D5E1F5" font-size="11" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">FX</text>
+<rect x="388" y="676" width="340" height="280" fill="#121B2D" rx="14" ry="14" stroke="#273449" stroke-width="1" />
+<rect x="398" y="686" width="320" height="240" fill="#09111F" rx="10" ry="10" />
+<g transform="translate(398,686)"><rect x="0" y="0" width="320" height="240" fill="#09111F" />
+<rect x="0" y="0" width="320" height="46" fill="#111C2E" />
+<text x="10" y="16" fill="#FFFFFF" font-size="14" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="start">ARPEGGIATOR</text>
+<text x="10" y="36" fill="#D5E1F5" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="500" text-anchor="start">132BPM RUN A:ON S:OFF</text>
+<rect x="0" y="46" width="320" height="150" fill="#0D1628" />
+<rect x="-9" y="54" width="316" height="56" fill="#000000" fill-opacity="0.000" />
+<rect x="0" y="54" width="60" height="56" fill="#9333EA" rx="12" ry="12" fill-opacity="0.300" />
+<text x="30.0" y="72" fill="#E5EDF8" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">BPM</text>
+<text x="30.0" y="101" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="600" text-anchor="middle">132 BPM</text>
+<rect x="64" y="54" width="60" height="56" fill="#9333EA" rx="12" ry="12" fill-opacity="0.300" />
+<text x="94.0" y="72" fill="#E5EDF8" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">DIV</text>
+<text x="94.0" y="101" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="600" text-anchor="middle">x2</text>
+<rect x="128" y="54" width="60" height="56" fill="#9333EA" rx="12" ry="12" fill-opacity="0.300" />
+<text x="158.0" y="72" fill="#E5EDF8" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">GATE</text>
+<text x="158.0" y="101" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="600" text-anchor="middle">64%</text>
+<rect x="192" y="54" width="60" height="56" fill="#9333EA" rx="12" ry="12" fill-opacity="0.300" />
+<text x="222.0" y="72" fill="#E5EDF8" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">OCT</text>
+<text x="222.0" y="101" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="600" text-anchor="middle">2 oct</text>
+<rect x="256" y="54" width="60" height="56" fill="#9333EA" rx="12" ry="12" fill-opacity="0.300" />
+<text x="286.0" y="72" fill="#E5EDF8" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">MODE</text>
+<text x="286.0" y="101" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="600" text-anchor="middle">UP/DOWN</text>
+<rect x="6" y="116" width="145" height="26" fill="#9333EA" rx="8" ry="8" fill-opacity="0.400" />
+<text x="78.5" y="132" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">ENABLE</text>
+<rect x="153" y="116" width="145" height="26" fill="#9333EA" rx="8" ry="8" fill-opacity="0.400" />
+<text x="225.5" y="132" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">LATCH</text>
+<rect x="6" y="148" width="145" height="26" fill="#9333EA" rx="8" ry="8" fill-opacity="0.400" />
+<text x="78.5" y="164" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">RUN/STOP</text>
+<rect x="153" y="148" width="145" height="26" fill="#9333EA" rx="8" ry="8" fill-opacity="0.400" />
+<text x="225.5" y="164" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">CLR HELD</text>
+<rect x="0" y="196" width="320" height="44" fill="#111C2E" />
+<rect x="8" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="26" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">PLAY</text>
+<rect x="46" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="64" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">OSC</text>
+<rect x="84" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="102" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">FILT</text>
+<rect x="122" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="140" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">MOD</text>
+<rect x="160" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="178" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">FX</text>
+<rect x="198" y="202" width="36" height="32" fill="#9333EA" rx="7" ry="7" />
+<text x="216" y="222" fill="#FFFFFF" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">ARP</text>
+<rect x="236" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="254" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">SEQ</text>
+<rect x="274" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="292" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">SET</text>
+<rect x="0.5" y="0.5" width="319" height="239" fill="none" stroke="#273449" stroke-width="1" /></g>
+<text x="558.0" y="942" fill="#D5E1F5" font-size="11" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">ARPEGGIATOR</text>
+<rect x="24" y="980" width="340" height="280" fill="#121B2D" rx="14" ry="14" stroke="#273449" stroke-width="1" />
+<rect x="34" y="990" width="320" height="240" fill="#09111F" rx="10" ry="10" />
+<g transform="translate(34,990)"><rect x="0" y="0" width="320" height="240" fill="#09111F" />
+<rect x="0" y="0" width="320" height="46" fill="#111C2E" />
+<text x="10" y="16" fill="#FFFFFF" font-size="14" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="start">SEQUENCER</text>
+<text x="10" y="36" fill="#D5E1F5" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="500" text-anchor="start">118BPM RUN A:OFF S:ON</text>
+<rect x="0" y="46" width="320" height="150" fill="#0D1628" />
+<text x="6" y="58" fill="#D5E1F5" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="500" text-anchor="start">STEP 06 E4 G72 B1</text>
+<rect x="6" y="80" width="72" height="34" fill="#C2410C" rx="8" ry="8" />
+<text x="42" y="101" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">01 C4</text>
+<rect x="82" y="80" width="72" height="34" fill="#C2410C" rx="8" ry="8" />
+<text x="118" y="101" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">02 D4</text>
+<rect x="158" y="80" width="72" height="34" fill="#C2410C" rx="8" ry="8" />
+<text x="194" y="101" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">03 G4</text>
+<rect x="234" y="80" width="72" height="34" fill="#1A2740" rx="8" ry="8" />
+<text x="270" y="101" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">04 --</text>
+<rect x="6" y="116" width="72" height="34" fill="#C2410C" rx="8" ry="8" />
+<text x="42" y="137" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">05 C4</text>
+<rect x="82" y="116" width="72" height="34" fill="#2563EB" rx="8" ry="8" />
+<text x="118" y="137" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">06 E4</text>
+<rect x="158" y="116" width="72" height="34" fill="#16A34A" rx="8" ry="8" />
+<text x="194" y="137" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">07 A4</text>
+<rect x="234" y="116" width="72" height="34" fill="#1A2740" rx="8" ry="8" />
+<text x="270" y="137" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">08 --</text>
+<rect x="10" y="156" width="72" height="24" fill="#DC2626" rx="8" ry="8" fill-opacity="0.400" />
+<text x="46.0" y="172" fill="#FFFFFF" font-size="8" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">RUN/STOP</text>
+<rect x="86" y="156" width="72" height="24" fill="#DC2626" rx="8" ry="8" fill-opacity="0.400" />
+<text x="122.0" y="172" fill="#FFFFFF" font-size="8" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">REC ARM</text>
+<rect x="162" y="156" width="72" height="24" fill="#DC2626" rx="8" ry="8" fill-opacity="0.400" />
+<text x="198.0" y="172" fill="#FFFFFF" font-size="8" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">BANK</text>
+<rect x="238" y="156" width="72" height="24" fill="#DC2626" rx="8" ry="8" fill-opacity="0.400" />
+<text x="274.0" y="172" fill="#FFFFFF" font-size="8" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">CLEAR</text>
+<rect x="0" y="196" width="320" height="44" fill="#111C2E" />
+<rect x="8" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="26" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">PLAY</text>
+<rect x="46" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="64" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">OSC</text>
+<rect x="84" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="102" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">FILT</text>
+<rect x="122" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="140" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">MOD</text>
+<rect x="160" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="178" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">FX</text>
+<rect x="198" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="216" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">ARP</text>
+<rect x="236" y="202" width="36" height="32" fill="#DC2626" rx="7" ry="7" />
+<text x="254" y="222" fill="#FFFFFF" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">SEQ</text>
+<rect x="274" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="292" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">SET</text>
+<rect x="0.5" y="0.5" width="319" height="239" fill="none" stroke="#273449" stroke-width="1" /></g>
+<text x="194.0" y="1246" fill="#D5E1F5" font-size="11" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">SEQUENCER</text>
+<rect x="388" y="980" width="340" height="280" fill="#121B2D" rx="14" ry="14" stroke="#273449" stroke-width="1" />
+<rect x="398" y="990" width="320" height="240" fill="#09111F" rx="10" ry="10" />
+<g transform="translate(398,990)"><rect x="0" y="0" width="320" height="240" fill="#09111F" />
+<rect x="0" y="0" width="320" height="46" fill="#111C2E" />
+<text x="10" y="16" fill="#FFFFFF" font-size="14" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="start">SETTINGS</text>
+<text x="10" y="36" fill="#D5E1F5" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="500" text-anchor="start">VOL 62%  TUNE Shur</text>
+<rect x="0" y="46" width="320" height="150" fill="#0D1628" />
+<rect x="-9" y="54" width="316" height="56" fill="#000000" fill-opacity="0.000" />
+<rect x="0" y="54" width="68" height="56" fill="#475569" rx="12" ry="12" fill-opacity="0.300" />
+<text x="34.0" y="72" fill="#E5EDF8" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">VOL</text>
+<text x="34.0" y="101" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="600" text-anchor="middle">62%</text>
+<rect x="72" y="54" width="236" height="56" fill="#475569" rx="12" ry="12" fill-opacity="0.300" />
+<text x="190.0" y="72" fill="#E5EDF8" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">TUNE</text>
+<text x="190.0" y="101" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="600" text-anchor="middle">Shur</text>
+<rect x="6" y="116" width="145" height="26" fill="#475569" rx="8" ry="8" fill-opacity="0.400" />
+<text x="78.5" y="132" fill="#FFFFFF" font-size="10" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">TEST PAGE</text>
+<rect x="0" y="196" width="320" height="44" fill="#111C2E" />
+<rect x="8" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="26" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">PLAY</text>
+<rect x="46" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="64" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">OSC</text>
+<rect x="84" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="102" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">FILT</text>
+<rect x="122" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="140" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">MOD</text>
+<rect x="160" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="178" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">FX</text>
+<rect x="198" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="216" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">ARP</text>
+<rect x="236" y="202" width="36" height="32" fill="#1A2740" rx="7" ry="7" />
+<text x="254" y="222" fill="#C2D2EA" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">SEQ</text>
+<rect x="274" y="202" width="36" height="32" fill="#475569" rx="7" ry="7" />
+<text x="292" y="222" fill="#FFFFFF" font-size="9" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">SET</text>
+<rect x="0.5" y="0.5" width="319" height="239" fill="none" stroke="#273449" stroke-width="1" /></g>
+<text x="558.0" y="1246" fill="#D5E1F5" font-size="11" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">SETTINGS</text>
+</svg>

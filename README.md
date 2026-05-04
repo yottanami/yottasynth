@@ -76,6 +76,24 @@ Page layout:
 
 For a user-perspective walkthrough of the panel, controls, pages, and sequencing flow, see [docs/user-guide.md](docs/user-guide.md).
 
+For developer-facing documentation of the firmware structure and code, see:
+
+- [docs/README.md](docs/README.md)
+- [docs/source-reading-guide.md](docs/source-reading-guide.md)
+- [docs/codebase-guide.md](docs/codebase-guide.md)
+
+## Screenshots
+
+![Yottasynth interface overview](docs/screenshots/overview.svg)
+
+To export screenshots of the current screen pages without running the device firmware:
+
+```bash
+python3 scripts/generate_screenshots.py
+```
+
+This writes one SVG per page, a stitched `overview.svg` for the README, and a simple preview index into `docs/screenshots/`.
+
 ## Hardware + 3D
 
 - board design files: `etc/board/`

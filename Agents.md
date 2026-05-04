@@ -36,6 +36,7 @@ Source of truth note:
 - the active mux and panel mapping in code is the valid mapping
 - board design documents may still reflect an older mux wiring layout
 - if there is any conflict, follow the current firmware implementation
+- end-user docs should not include mux-channel or wiring details; keep those details here and in the firmware source
 
 ### Mux and panel controls
 

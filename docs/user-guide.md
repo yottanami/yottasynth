@@ -10,26 +10,9 @@ The current playing workflow is:
 2. choose the page you want from the bottom tab bar
 3. use the five knobs for the currently visible parameters
 4. use the touch buttons for page actions
-5. use the joystick push button when the interface asks for `OK`
+5. use the `OK` button when the interface asks for confirmation
 
 ## Main Controls
-
-## Wiring Note
-
-For the current panel controls and mux channel mapping, the firmware code is the source of truth.
-
-- the active mux mapping in code is the valid one
-- some board design documents may still show an older wiring layout
-- if the code and the older board docs disagree, follow the current firmware mapping
-
-The current control mapping used by the firmware is:
-
-- knob 1: `C2`
-- knob 2: `C4`
-- knob 3: `C1`
-- knob 4: `C5`
-- knob 5: `C0`
-- joystick push button: `C7`
 
 ### Touch screen
 
@@ -40,31 +23,20 @@ Use it to:
 - switch pages with the bottom tabs
 - press action buttons
 - select sequencer steps
-- enter the input test page from settings
 
 ### Five knobs
 
 The five knobs are always active, but their meaning changes with the current page.
 
-Physical order:
+### `OK` button
 
-- knob 1: `C2`
-- knob 2: `C4`
-- knob 3: `C1`
-- knob 4: `C5`
-- knob 5: `C0`
-
-### Joystick push button
-
-The joystick axes are currently unused. Only the push button is used.
-
-Current role:
+Use this button only when the instrument asks you to confirm an action.
 
 - `OK / Confirm`
 
 Example:
 
-- confirm sequencer clear when the UI is waiting for confirmation
+- confirm sequencer clear when the screen is waiting for confirmation
 
 ## Screen Layout
 
@@ -103,7 +75,6 @@ Touch buttons:
 
 - `RUN/STOP`
 - `ARP TOG`
-- unused slot
 - `PANIC`
 
 ## `OSC`
@@ -281,7 +252,7 @@ Current flow:
 
 1. press `CLEAR`
 2. the UI waits for confirmation
-3. press the joystick push button to confirm
+3. press the `OK` button to confirm
 
 ## `SET`
 
@@ -291,10 +262,6 @@ Knobs:
 
 - `VOL`
 - `TUNE`
-
-Touch button:
-
-- `TEST PAGE`
 
 This page is also where you choose the tuning system.
 
@@ -340,7 +307,6 @@ To change tuning:
 From a user perspective, these are the main current limits:
 
 - the synth is monophonic
-- the joystick axes are not used yet
 - the sequencer is monophonic
 - sequence clear uses confirm, but broader preset management is not implemented yet
 - external MIDI clock sync is not exposed in the current workflow
