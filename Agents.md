@@ -1,607 +1,445 @@
-# Yottasynth Research Notes
+# Yottasynth Agent Notes
 
 ## Goal
 
-This repository is building a Teensy 4.1 based digital synthesizer with:
+This repository is building a Teensy 4.1 based digital instrument with:
 
 - Teensy 4.1
 - Teensy Audio Shield / SGTL5000 codec
 - 320x240 SPI TFT touch screen
 - 5 potentiometers
-- 1 joystick
-- future arpeggiator and sequencer support
+- 1 joystick push button used as `OK / Confirm`
+- internal arpeggiator and sequencer
 
-This document records:
+This document is the implementation-facing reference for how the current firmware works and how the interface and panel should be understood.
 
-- which commercial synth is the best reference for feature and UX ideas
-- how the current hardware is wired
-- how the current firmware works today
-- what is already implemented versus what is only planned or legacy
+## Product Direction
 
-## Recommended Reference Synth
+Treat the instrument as a **touch-first panel with hardware assist controls**.
 
-### Primary recommendation: Korg minilogue xd
+That means:
 
-The best single reference for this project is the **Korg minilogue xd**.
+- the touch screen is the main navigation surface
+- the five pots are always active and remap to the current page
+- the joystick push button is reserved for confirm-style actions, not general navigation
+- the UI should feel like one instrument panel split into focused pages, not like a generic settings menu
 
-Why it fits this project best:
+The current firmware already follows that model. Future work should extend it, not replace it with a desktop-style menu tree.
 
-- It combines an **analogue-style front panel** with a **display-driven workflow**, which matches this project better than a pure knob-per-function synth.
-- It has a **joystick**, which maps naturally to the project hardware.
-- It already includes the roadmap features this project wants: **arp/latch, sequencer, motion sequencing, effects, and visual screen feedback**.
-- Its UI is simpler and more learnable than something like a Novation Summit, which matters because this firmware is still early.
-- There is a lot of public documentation and community material around the minilogue family.
+## Current Hardware Control Map
 
-Relevant official minilogue xd features:
-
-- 4 voice analogue synth with extra digital engine
-- voice modes including `POLY`, `UNISON`, `CHORD`, `ARP / LATCH`
-- `16-step polyphonic sequencer`
-- `Motion sequence` on up to `4 parameters`
-- built-in `modulation`, `delay`, and `reverb`
-- `Joy stick`
-- `Real-time OLED oscilloscope`
-
-### Why not Moog Grandmother as the main reference
-
-The **Moog Grandmother** is a very good **secondary** reference for sound-design philosophy and mono-synth behavior, but not the best primary UI model.
-
-What is attractive about it:
-
-- strong mono-synth signal flow
-- immediate performance-oriented layout
-- built-in arpeggiator / sequencer
-- spring reverb
-
-Why it is not the best main template here:
-
-- it has **no screen-centered workflow**
-- it is built around a **semi-modular patching** mindset that this hardware does not currently expose
-- it is a better inspiration for **sound character and one-voice behavior** than for this repo’s touch UI
-
-### Why not Novation Summit as the main reference
-
-The **Novation Summit** is feature-rich, but it is too large and too deep for the current project stage.
-
-Why it is a weaker fit:
-
-- many more simultaneous controls than this hardware has
-- much broader modulation and multitimbral scope than the current code
-- current firmware is still basically one active synth voice plus placeholder UI
-
-### Practical direction
-
-Use:
-
-- **Korg minilogue xd** as the main UX and feature reference
-- **Moog Grandmother** as a secondary reference for mono voice behavior, performance feel, and basic subtractive synth flow
-
-That combination is a better fit than cloning Summit directly.
-
-## External Research Sources
-
-- Korg minilogue xd specs: https://www.korg.com/us/products/synthesizers/minilogue_xd/specifications.php
-- Korg minilogue product page: https://www.korg.com/us/products/synthesizers/minilogue/index.php
-- Novation Summit user guide intro: https://userguides.novationmusic.com/hc/en-gb/articles/25003992884242-Introduction-to-the-Novation-Summit
-- Moog Grandmother manual: https://api.moogmusic.com/sites/default/files/2018-08/Grandmother_Manual.pdf
-- LVGL display model docs: https://docs.lvgl.io/master/main-modules/display/overview.html
-- PJRC Teensy Audio System Design Tool: https://www.pjrc.com/teensy/gui/
-
-## Current Project Hardware
-
-### Core platform
-
-From the repo and board files:
+From the repo and active code:
 
 - MCU: `Teensy 4.1`
 - firmware environment: `PlatformIO` + `Arduino`
-- display stack: `ILI9341` class TFT via `TFT_eSPI`
+- display stack: `ILI9341` via `TFT_eSPI`
 - touch controller: `XPT2046`
-- audio output codec: `AudioControlSGTL5000`
-- control input expansion: `74HC4067` analog multiplexer board (`BOB-09056`)
+- audio codec: `AudioControlSGTL5000`
+- control expansion: `74HC4067` analog multiplexer
 
 ### Display and touch wiring
-
-From `platformio.ini` and `src/main.cpp`:
 
 - TFT MOSI: `11`
 - TFT MISO: `12`
 - TFT SCLK: `13`
 - TFT CS: `3`
 - TFT DC: `2`
-- TFT RST: `-1`
 - touch CS: `5`
 - touch IRQ: `4`
 - resolution: `320x240`
 
-### Potentiometers and joystick wiring
+### Mux and panel controls
 
-From `etc/board/board.kicad_pcb` plus the current mux wiring override:
+- mux select pins: `14 / 15 / 16 / 17`
+- mux signal pin: `22`
+- knob 1: `C2`
+- knob 2: `C4`
+- knob 3: `C1`
+- knob 4: `C5`
+- knob 5: `C0`
+- joystick push button: `C7`
 
-- `RV1`..`RV5` are five potentiometers
-- the mux is a `74HC4067` breakout (`U2`)
-- current mux select pins:
-  - `S0 -> 14`
-  - `S1 -> 15`
-  - `S2 -> 16`
-  - `S3 -> 17`
-- current mux signal pin:
-  - `SIG -> 22`
+Joystick axes are intentionally unused in the current implementation.
 
-The runtime mux/test code uses the same live mapping in `src/main.cpp` and `include/input_test_page.h`.
+## Interface Layout
 
-The currently confirmed front-panel order used by firmware is:
+The implemented UI is a fixed three-band layout on the `320x240` screen:
 
-- knob 1 -> `C2`
-- knob 2 -> `C4`
-- knob 3 -> `C1`
-- knob 4 -> `C5`
-- knob 5 -> `C0`
+- top status bar: `46px`
+- main content panel: `150px`
+- bottom tab bar: `44px`
 
-There is also a 5-pin connector `J1`:
+### Top status bar
 
-- pin 1 = `GND`
-- pin 2 = `3V3`
-- pin 3 = mux `C5`
-- pin 4 = mux `C6`
-- pin 5 = mux `C7`
+The top bar should always show:
 
-The current firmware treats:
+- current page title
+- one compact status line relevant to the active page
 
-- `C7` as the joystick push button
-- joystick `X/Y` as unused in v1
+Current behavior:
 
-That `C7` button mapping is based on the current hardware confirmation, not only on the schematic inference.
+- most pages show BPM, transport state, arp state, and sequencer state
+- `OSC / MIX` shows oscillator wave summary and noise amount
+- `FX` shows effect mode and enabled/bypassed state
+- `SETTINGS` shows output volume and current tuning
+- input-test mode shows service text instead of musical status
 
-## Firmware Stack
+### Main content panel
 
-### Libraries in use
+The default content layout is:
 
-From `platformio.ini`:
+- one row of five pot cards at the top
+- four large touch action buttons below
 
-- `paulstoffregen/XPT2046_Touchscreen`
-- `bodmer/TFT_eSPI`
-- `lvgl/lvgl@9.4.0`
+Each pot card shows:
 
-### LVGL configuration
+- short parameter name
+- current value
 
-From `include/lv_conf.h`:
+This is the core panel metaphor of the instrument. The screen should always make it clear what the five physical knobs currently do.
 
-- `LV_COLOR_DEPTH 16`
-- `LV_MEM_SIZE (64 * 1024U)`
-- `LV_USE_MENU 1`
-- `LV_USE_LOG 1`
-- `LV_USE_TFT_ESPI 1`
+### Bottom tab bar
 
-This means the project is configured for:
+The implemented tabs are:
 
-- 16-bit RGB565 UI rendering
-- LVGL menu widget support
-- LVGL logging over Serial
-- LVGL’s TFT_eSPI integration path
+- `PLAY`
+- `OSC`
+- `FILT`
+- `MOD`
+- `FX`
+- `ARP`
+- `SEQ`
+- `SET`
 
-## How the UI Works Today
+Each page has its own accent color. That color coding is part of the panel identity and should stay consistent if the UI grows.
 
-### LVGL model in this project
+## Page Model
 
-LVGL’s core model is:
+The firmware currently implements eight pages.
 
-- create one `display`
-- create one `input device`
-- create widgets on the active screen
-- call the LVGL task/tick functions repeatedly
+### `PLAY`
 
-This repo follows that model in `src/main.cpp`.
+Purpose:
 
-### Startup sequence
+- quick performance access without leaving the main play surface
 
-Current startup flow:
+Knobs:
 
-1. `lv_init()`
-2. `tft.begin()`
-3. `tft.setRotation(3)`
-4. `ts.begin()`
-5. `ts.setRotation(0)`
-6. register LVGL log callback to `Serial`
-7. create the LVGL display
-8. create one pointer input device
-9. render the main menu
-10. set up audio
-11. set up synth
-12. set up USB-host MIDI
+- `CUT`
+- `RES`
+- `GLIDE`
+- `A-GATE`
+- `BPM`
 
-### Display path
+Touch actions:
 
-There are two display paths in `src/main.cpp`:
+- `RUN/STOP`
+- `ARP TOG`
+- unused slot
+- `PANIC`
 
-- a custom `my_disp_flush(...)`
-- the LVGL TFT_eSPI path `lv_tft_espi_create(...)`
+This page should remain the fastest performance page, with no dense editing.
 
-Because `LV_USE_TFT_ESPI` is enabled, the current code uses `lv_tft_espi_create(...)` rather than the custom flush callback.
+### `OSC / MIX`
 
-### Touch path
+Purpose:
 
-Touch is implemented in `my_touchpad_read(...)`:
+- source balance and coarse oscillator shape changes
 
-- `ts.touched()` decides pressed/released state
-- `ts.getPoint()` reads raw touch coordinates
-- hard-coded calibration values map raw coordinates to screen coordinates
+Knobs:
 
-Current calibration mapping:
+- `OSC1`
+- `OSC2`
+- `NOISE`
+- `OCT`
+- `DETUNE`
 
-- raw `p.y` mapped from `400..3829` to screen X
-- raw `p.x` mapped from `540..3756` to screen Y
+Touch actions:
 
-Important details:
+- `W1 <`
+- `W1 >`
+- `W2 <`
+- `W2 >`
 
-- touch is the **only user input currently read by active firmware**
-- the function still prints touch X values to Serial during touches
-- touch calibration is hard-coded and board-specific
+Waveform changes are intentionally touch-based while the five knobs handle continuous values.
 
-### Current UI screens
+### `FILTER / AMP`
 
-The active UI is only a placeholder `lv_menu` with three entries:
+Purpose:
 
-- `SYNTHESIZER`
-- `ARPEGGIATOR`
-- `SEQUENCER`
+- amplitude and brightness shaping
 
-Each entry opens a placeholder page:
+Knobs:
 
-- `SYNTH PAGE`
-- `ARPEGGIATOR PAGE`
-- `SEQUENCER PAGE`
+- `CUT`
+- `RES`
+- `ATT`
+- `DEC`
+- `REL`
 
-There is no real editor page, modulation page, arp page, or sequencer page yet.
+Touch actions:
 
-### Settings / mode state
+- `SUS -`
+- `SUS +`
+- `SNAP`
+- `LONG`
 
-Menu presses write a mode into `Settings`:
+This page mixes direct ADSR editing with quick envelope presets, which is a good fit for the current panel size.
 
-- `Mode::SYNTHESIZER`
-- `Mode::ARPEGGIATOR`
-- `Mode::SEQUENCER`
+### `MOD`
 
-But that mode is not used anywhere else in the active firmware yet. Today it is only stored, not acted on.
+Purpose:
 
-## How MIDI Works Today
+- lightweight modulation editing without deep routing
 
-### Input path
+Knobs:
 
-The project currently expects note input from **USB host MIDI**, not from local keyboard hardware.
+- `RATE`
+- `DEPTH`
+- `GLIDE`
+- `BEND`
+- `TARGET`
 
-`src/play_mode.cpp` sets up:
+Touch actions:
 
-- `USBHost`
-- two USB hubs
-- one `MIDIDevice`
+- `LFO OFF`
+- `FILT LFO`
+- `PITCH LFO`
+- `DEPTH 0`
 
-The main loop calls:
+The modulation model is intentionally shallow and should stay easy to read from the screen.
 
-- `myusb.Task()`
-- `midi1.read()`
+### `FX`
 
-### What MIDI events actually do
+Purpose:
 
-In the active code path:
+- one focused effect page with mode-specific knob labels
 
-- `Note On` is forwarded to `synth.onNoteOn(...)`
-- `Note Off` is forwarded to `synth.onNoteOff(...)`
+Modes:
 
-Everything else is mostly just logged to Serial:
+- `ECHO`
+- `REVERB`
+- `DRIVE`
 
-- Control Change
-- Program Change
-- Aftertouch
-- Pitch Change
-- Clock / Start / Stop
-- SysEx
+Touch actions:
 
-Important implication:
+- `BYPASS`
+- `ECHO`
+- `REVERB`
+- `DIRT`
 
-- **MIDI CC is not currently changing synth parameters in the active firmware**
-- **pitch bend is not currently applied in the active firmware path**
-- **arp and sequencer clock callbacks exist, but no arp/sequencer engine uses them yet**
+The five pot labels change with the selected effect mode:
 
-## How Audio Works Today
+- echo: `MIX`, `TIME`, `FDBK`, `RATIO`, `SMEAR`
+- reverb: `MIX`, `SIZE`, `DAMP`, `PRE`, `TONE`
+- drive: `MIX`, `DRIVE`, `TONE`, `CRUSH`, `LEVEL`
 
-### Audio library architecture
+This is the right pattern for pages that cannot fit every parameter at once: keep the page stable and retitle the five knob cards.
 
-The project uses the **Teensy Audio Library** and the audio graph in `src/audio_setup.cpp` was clearly generated from the PJRC audio design tool and then committed as C++ objects and patch cords.
+### `ARPEGGIATOR`
 
-The graph contains more than the currently active synth uses:
+Purpose:
 
-- lead path
-- mid path
-- bass path
-- drum path
-- global mixer
-- global filter
-- stereo I2S output
+- transport-linked pattern performance
 
-### Audio objects present
+Knobs:
 
-The audio graph includes:
+- `BPM`
+- `DIV`
+- `GATE`
+- `OCT`
+- `MODE`
 
-- waveform oscillators for lead, mid, bass
-- pink noise sources for lead, mid, bass
-- state-variable filters
-- ADSR envelopes
-- mixers
-- one simple drum object
-- SGTL5000 codec output through I2S
+Touch actions:
 
-### What is actually active right now
+- `ENABLE`
+- `LATCH`
+- `RUN/STOP`
+- `CLR HELD`
 
-The active `Synth` instance in `src/main.cpp` only uses the **lead** lane:
+The arp is part of the main instrument flow, not a hidden utility.
 
-- `lead_waveform1`
-- `lead_waveform2`
-- `lead_pink`
-- `lead_filter`
-- `lead_envelope`
+### `SEQUENCER`
 
-So while the audio graph suggests future multi-part expansion, the current instrument behavior is much smaller than the graph implies.
+Purpose:
 
-### Audio init
+- direct step entry and transport control
 
-`setupAudio()` currently only does:
+Knobs:
 
-- `sgtl5000_1.enable()`
-- `sgtl5000_1.volume(0.50)`
-- `AudioMemory(30)`
+- `BPM`
+- `LEN`
+- `SWING`
+- `NOTE`
+- `GATE`
 
-There is no effect block, no delay, no chorus, no reverb, and no audio input routing active yet.
+Touch actions:
 
-## How the Synth Works Today
+- `RUN/STOP`
+- `REC ARM`
+- `BANK`
+- `CLEAR`
 
-### Current synth voice
+Sequencer-specific content replaces the pot-card row with:
 
-The active synth in `src/synth.cpp` is basically a **single monophonic subtractive voice**:
+- one step info label
+- eight large step buttons for the visible bank
 
-- oscillator 1: `sawtooth`
-- oscillator 2: `sine`
-- one filter
-- one envelope
-- optional LFO behavior
-- no active effects
+Interaction rules:
 
-### Envelope defaults
+- first tap on a step selects it
+- tapping the selected step toggles it active/inactive
+- `BANK` switches between steps `1-8` and `9-16`
+- `CLEAR` enters a confirmation state
+- joystick `OK` confirms the clear operation
 
-The active voice envelope is initialized to:
+This is the most important special-case panel in the current UI. It should stay tactile and obvious rather than becoming list-driven.
 
-- attack: `10`
-- decay: `50`
-- sustain: `0.7`
-- release: `200`
+### `SETTINGS`
 
-### Note handling
+Purpose:
 
-Incoming notes between `24` and `107` are accepted.
+- small number of global controls without turning the synth into a menu maze
 
-The synth uses an 8-note buffer and behaves as a **last-note-priority mono synth**:
+Knobs:
 
-- note-on pushes into buffer and immediately plays
-- note-off removes from buffer
-- when the top note is released, the previous held note resumes
+- `VOL`
+- `TUNE`
 
-### Oscillator behavior
+Touch actions:
 
-When a note plays:
+- `TEST PAGE`
 
-- oscillator 1 frequency = played note
-- oscillator 2 frequency = played note plus octave/detune/LFO pitch factor
-- oscillator amplitudes follow note velocity
-- pink noise amplitude is forced to `0`
+Unlike the other pages, settings intentionally collapses to two active pot cards and one service entry point.
 
-That means noise exists in the graph but is effectively muted in the current active path.
+### Input test overlay
 
-### LFO behavior
+The input-test screen is a service/debug overlay, not a separate product mode. It temporarily replaces the content panel and is entered from `SETTINGS`.
 
-There is an `LFOupdate(...)` function supporting multiple modes for:
+## Panel Behavior
 
-- filter modulation
-- pitch modulation
-- free, retriggered, and one-shot style behavior
+### Knob model
 
-However, in the active firmware today:
+The five knobs are active in normal runtime.
 
-- `LFOmodeSelect` defaults to `0`
-- `LFOdepth` defaults to `0`
-- there is no active UI or MIDI mapping changing these values
+Current behavior:
 
-So the LFO engine exists in code, but it is not yet really surfaced to the user.
+- values are read through the mux
+- analog reads use smoothing
+- changes are only emitted after a movement threshold
+- each page maps the same physical knob order to a different parameter set
 
-## Current State of Pots and Joystick
+This is the correct panel model for the current hardware. Documentation and future features should assume context-sensitive knobs, not fixed one-function-per-knob labeling.
 
-### What hardware supports
+### Touch model
 
-The board is clearly wired for:
+Touch input is stabilized in firmware before LVGL receives it.
 
-- 5 front-panel potentiometers
-- more analog inputs through the mux
-- likely joystick access through `J1`
+Current behavior:
 
-### What firmware actually does
+- press confirmation requires repeated stable samples
+- move confirmation also requires stable samples
+- release uses its own threshold
+- raw coordinates are calibrated into screen coordinates
 
-Active firmware currently does **not** scan those controls.
+This means the touch UI is designed for deliberate finger interaction, not stylus-like precision. Buttons should stay large and clearly separated.
 
-Evidence:
+### Confirm model
 
-- there is no active `analogRead(...)` loop for controls
-- there is no mux scan routine in the live code path
-- there are only commented examples in `src/main.cpp`
+The joystick push button is currently dedicated to `OK / Confirm`.
 
-So the control hardware is present, but not integrated into the running synth/UI yet.
+Implemented use today:
 
-## Legacy / Prototype Code Worth Mining
+- confirms sequencer clear after the UI shows `WAIT OK`
 
-### `lib/synthesizer/`
+Future destructive actions should reuse this pattern instead of adding tiny touch-only confirmation dialogs.
 
-There is an older synth implementation in:
+## Runtime Behavior
 
-- `lib/synthesizer/synthesizer.cpp`
-- `lib/synthesizer/synthesizer.h`
+### Startup flow
 
-This older code is important because it is **more feature-complete in parameter control** than the active `src/synth.cpp`.
+Current boot flow is:
 
-It includes MIDI CC mappings such as:
+1. initialize LVGL
+2. initialize TFT and touch
+3. create the LVGL display and input device
+4. render the main menu
+5. start control input scanning
+6. initialize audio
+7. initialize synth
+8. initialize USB-host MIDI
+9. start the performance engine
 
-- `100` osc 1 mix
-- `101` osc 2 mix
-- `102` noise mix
-- `103` octave
-- `104` attack
-- `105` decay
-- `106` sustain
-- `107` release
-- `108` detune
-- `109` filter frequency
-- `110` resonance
-- `111` bend range
-- `112` LFO speed
-- `113` LFO depth
-- `114` LFO mode
+### Audio and synth behavior
 
-This is not the active firmware path right now, but it is useful prior art for reconnecting the hardware controls later.
+The active instrument is currently:
 
-### `control.pd`
+- one monophonic synth voice with last-note priority
+- dual oscillator plus noise
+- filter and ADSR envelope
+- LFO with filter or pitch target
+- pitch bend
+- output volume control
+- selectable FX state for echo, reverb, and drive
 
-`control.pd` is a Pure Data patch that sends those same CC numbers.
+The larger audio graph still contains extra lanes beyond the active lead voice, but the playable instrument is centered on the lead path.
 
-That tells us an older workflow likely looked like:
+### MIDI and transport behavior
 
-- external UI in Pure Data
-- MIDI CC into the synth engine
-- synth parameters updated from CC values
+Current live behavior:
 
-This is useful because it already defines a compact parameter map that can be repurposed for:
+- note input comes from `USBHost_t36`
+- pitch bend is active
+- arp and sequencer share the same internal transport
+- sequencer can live-record MIDI notes into the active step while record is armed
+- transport is currently internal-clock only
 
-- 5 pots
-- touch pages
-- joystick modifiers
+### LVGL timing
 
-## Important Gaps and Risks
+The firmware now advances LVGL using elapsed `millis()` time, not a fake fixed increment. The draw buffer lives in `DMAMEM` to fit comfortably on Teensy 4.1.
 
-### 1. Hardware inputs are ahead of firmware
+## Practical UI Rules
 
-The board already supports a muxed control surface, but current firmware only uses:
+Use these rules when extending the instrument:
 
-- touch screen
-- USB host MIDI note events
+- keep the current three-band screen structure
+- always show the active meaning of the five knobs
+- prefer page-specific panels over deep navigation
+- keep touch targets large enough for finger use
+- use touch for selection and discrete actions
+- use pots for continuous editing
+- reserve the joystick push button for confirmations and safe commits
+- keep color accents page-specific and stable
+- treat the sequencer as a hands-on grid, not a text editor
 
-### 2. UI is only structural
+## Current Gaps
 
-The menu exists, but the actual pages for:
+The current implementation is already functional, but these limits are still real:
 
-- synth editing
-- arp editing
-- sequencer editing
+- no preset save/load yet
+- joystick axes still unused
+- no external MIDI clock sync yet
+- sequencer tie state exists in data but is not surfaced in the current UI
+- the broader multi-lane audio graph is not yet exposed as a multi-part instrument
 
-do not exist yet.
+## Next Engineering Steps
 
-### 3. Audio graph is ahead of synth behavior
-
-The audio graph suggests multiple lanes and future layering, but the active synth uses only the lead lane.
-
-### 4. MIDI support is incomplete in the active path
-
-The active code logs many MIDI messages but only note on/off affect sound.
-
-### 5. Timing for LVGL is rough
-
-The main loop calls:
-
-- `lv_task_handler()`
-- `lv_tick_inc(5)`
-
-without basing the tick on elapsed real time. This can make UI timing depend on loop speed.
-
-### 6. `Settings` implementation should be cleaned up before expansion
-
-`include/settings.h` currently has issues:
-
-- `mode` is not initialized by default
-- the singleton static is defined in the header
-- the destructor deletes `instance`, which is unsafe design
-
-This is not the biggest blocker for the synth, but it should be fixed before the UI state grows.
-
-## Recommended Product Direction for This Repo
-
-## Implemented V1 Runtime
-
-The active firmware now implements a first integrated instrument shell:
-
-- a **mono synth** voice with patch state routed into the Teensy audio graph
-- a **touch-first LVGL shell** with six pages:
-  - `PLAY`
-  - `OSC / MIX`
-  - `FILTER / AMP`
-  - `MOD`
-  - `ARPEGGIATOR`
-  - `SEQUENCER`
-- **five context-sensitive knobs** that remap per page using the confirmed channel order above
-- **joystick push button** used as `OK / Confirm` for destructive actions such as sequence clear
-- **internal tempo clock**
-- **arpeggiator**
-- **16-step monophonic sequencer**
-- **live MIDI record into the sequencer**
-- an **input test overlay** for service/debug rather than booting into diagnostics by default
-
-Important current implementation details:
-
-- transport is currently **internal clock only**
-- external MIDI note input is handled through `USBHost_t36`
-- pitch bend is routed into the active synth
-- LVGL timing now uses elapsed `millis()` rather than a fixed fake tick increment
-- the LVGL draw buffer is placed in `DMAMEM` to keep RAM1 usage within Teensy 4.1 limits
-
-### UX model
-
-Use the touch screen as a **page-based panel**, not as a generic menu system.
-
-A good first practical model is:
-
-- page 1: `OSC / MIX`
-- page 2: `FILTER / AMP`
-- page 3: `MOD`
-- page 4: `FX`
-- page 5: `ARP`
-- page 6: `SEQ`
-
-Then make the 5 pots context-sensitive to the current page.
-
-That matches the real hardware better than trying to copy every physical control of a hardware synth.
-
-### Sound engine model
-
-For early iterations:
-
-- keep the core voice **mono or duo**
-- follow **Grandmother-style subtractive clarity**
-- follow **minilogue-style page structure and display feedback**
-
-That is a better fit than jumping directly into Summit-level complexity.
-
-### Best next engineering steps
-
-1. Validate the real hardware feel of the new control map on device and retune thresholds or smoothing if any knob chatters.
-2. Add preset storage for patch + sequence state.
-3. Add one first effect, likely delay, on top of the current mono path.
-4. Improve sequencer editing with ties, rests, and per-step motion.
-5. Add external MIDI clock sync if needed after the internal-clock workflow feels stable.
+1. Add preset storage for patch, FX, and sequence state.
+2. Expose sequencer tie and rest editing without making the step page crowded.
+3. Decide whether joystick axes should get a dedicated performance role or remain unused.
+4. Add external MIDI clock sync only after the internal transport workflow feels solid on hardware.
+5. Expand the instrument only through the existing page-based panel model.
 
 ## Bottom Line
 
-Today this repo is an **early but usable synth UI instrument**. It currently provides:
+The current firmware is no longer a placeholder menu. It already behaves like a compact instrument panel with:
 
-- a Teensy 4.1 firmware base
-- working TFT + touch
-- USB host MIDI note input
-- a working mono synth voice with on-screen parameter editing
-- page-based knob mapping
-- internal-clocked arp and 16-step sequencer
-- a larger audio graph that still has room for future layering and effects
+- eight touch pages
+- five context-sensitive knobs
+- one confirm button
+- a mono synth engine
+- active FX
+- an arpeggiator
+- a 16-step sequencer
 
-The best commercial reference to guide the next implementation steps is **Korg minilogue xd**.
+Any future documentation or agent guidance should describe and extend that implemented panel model directly, without leaning on external synthesizer examples.

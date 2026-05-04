@@ -5,12 +5,13 @@
 The current firmware implements the first integrated Yottasynth instrument shell on Teensy 4.1:
 
 - mono synth engine
-- six-page touch UI
+- eight-tab touch UI
 - five context-sensitive pots
 - joystick push-button as `OK / Confirm`
 - internal BPM transport
 - arpeggiator
 - 16-step monophonic sequencer with live MIDI record
+- active FX page with `echo`, `reverb`, and `drive`
 
 This document is the practical runtime reference for the current implementation.
 
@@ -32,16 +33,19 @@ Joystick axes are intentionally unused in v1.
 
 - `PLAY`
   - pots: cutoff, resonance, glide, arp gate, BPM
-  - touch actions: run/stop, arp toggle, seq toggle, panic
+  - touch actions: run/stop, arp toggle, unused slot, panic
 - `OSC / MIX`
   - pots: osc1 mix, osc2 mix, noise mix, octave, detune
-  - touch actions: octave down, octave up, detune reset, noise off
+  - touch actions: osc1 previous wave, osc1 next wave, osc2 previous wave, osc2 next wave
 - `FILTER / AMP`
   - pots: cutoff, resonance, attack, decay, release
   - touch actions: sustain down, sustain up, short envelope preset, long envelope preset
 - `MOD`
   - pots: LFO rate, LFO depth, glide, bend range, LFO target
   - touch actions: LFO off, filter target, pitch target, zero depth
+- `FX`
+  - pots: mode-dependent effect parameters
+  - touch actions: bypass, echo, reverb, drive
 - `ARPEGGIATOR`
   - pots: BPM, division, gate, octave range, mode
   - touch actions: enable, latch, run/stop, clear held notes
@@ -49,6 +53,9 @@ Joystick axes are intentionally unused in v1.
   - pots: BPM, pattern length, swing, selected-step note, selected-step gate
   - touch actions: run/stop, record arm, bank switch, clear pattern
   - touch step pads: select a step on first tap, toggle active state on second tap
+- `SETTINGS`
+  - pots: output volume, tuning
+  - touch actions: input test page
 
 The `OK` button confirms pattern clear when the sequencer page is waiting for confirmation.
 
@@ -59,6 +66,8 @@ The `OK` button confirms pattern clear when the sequencer page is waiting for co
 - arpeggiator and sequencer share the same internal transport
 - sequencer playback takes ownership of generated notes while running
 - live MIDI record writes incoming notes into the current sequencer playhead step when record is armed
+- touch is stabilized in firmware before LVGL sees presses and moves
+- the five pots are actively scanned through the mux during normal runtime
 - LVGL timing uses elapsed `millis()`
 - the LVGL draw buffer lives in `DMAMEM` to stay within Teensy RAM1 limits
 
@@ -67,7 +76,6 @@ The `OK` button confirms pattern clear when the sequencer page is waiting for co
 - no preset save/load yet
 - no joystick axis behavior yet
 - no external MIDI clock sync yet
-- no effects yet
 - sequencer is monophonic and does not expose tie editing in the UI yet
 
 ## Validation

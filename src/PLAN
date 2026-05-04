@@ -32,7 +32,7 @@ The device right now has 5 potensiometer knobs. first one is C2 secnd is C4 and 
   It also has a joystick that I only want to use the push button of it. (for example as confirm/ok button)
   It also has a touch screen
 
-  Based on the availabe inputs and example synths that I have in Agents document
+  Based on the available inputs and the current panel model documented in Agents
   Plan to implement the synthesizer features with a good user experiments
   it also should have an arpegiator and a sequencer with tempo select
   the selectable items on screen should be big enough to easily touchable
