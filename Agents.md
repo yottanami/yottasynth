@@ -1,19 +1,6 @@
 # Yottasynth Agent Notes
 
-## Goal
-
-This repository is building a Teensy 4.1 based digital instrument with:
-
-- Teensy 4.1
-- Teensy Audio Shield / SGTL5000 codec
-- 320x240 SPI TFT touch screen
-- 5 potentiometers
-- 1 joystick push button used as `OK / Confirm`
-- internal arpeggiator and sequencer
-
-This document is the implementation-facing reference for how the current firmware works and how the interface and panel should be understood.
-
-## Product Direction
+## Scope
 
 Treat the instrument as a **touch-first panel with hardware assist controls**.
 
@@ -24,29 +11,31 @@ That means:
 - the joystick push button is reserved for confirm-style actions, not general navigation
 - the UI should feel like one instrument panel split into focused pages, not like a generic settings menu
 
-The current firmware already follows that model. Future work should extend it, not replace it with a desktop-style menu tree.
+The current firmware already follows that model. This document should stay focused on the actual panel structure and visual interaction model.
+
+## Platform Context
+
+The current implementation runs on:
+
+- `Teensy 4.1`
+- `SGTL5000` audio codec
+- `320x240` SPI TFT touch display
+- `74HC4067` mux for panel controls
+
+Keep these platform constraints in mind for future work:
+
+- RAM and CPU limits are those of a Teensy 4.1 class embedded target
+- the UI is built for a fixed `320x240` touch screen
+- the control surface is five knobs plus one joystick push button
+- hardware-facing details beyond the panel map live in the codebase and board files, not only in this document
 
 ## Current Hardware Control Map
 
-From the repo and active code:
+Source of truth note:
 
-- MCU: `Teensy 4.1`
-- firmware environment: `PlatformIO` + `Arduino`
-- display stack: `ILI9341` via `TFT_eSPI`
-- touch controller: `XPT2046`
-- audio codec: `AudioControlSGTL5000`
-- control expansion: `74HC4067` analog multiplexer
-
-### Display and touch wiring
-
-- TFT MOSI: `11`
-- TFT MISO: `12`
-- TFT SCLK: `13`
-- TFT CS: `3`
-- TFT DC: `2`
-- touch CS: `5`
-- touch IRQ: `4`
-- resolution: `320x240`
+- the active mux and panel mapping in code is the valid mapping
+- board design documents may still reflect an older mux wiring layout
+- if there is any conflict, follow the current firmware implementation
 
 ### Mux and panel controls
 
@@ -354,50 +343,6 @@ Implemented use today:
 
 Future destructive actions should reuse this pattern instead of adding tiny touch-only confirmation dialogs.
 
-## Runtime Behavior
-
-### Startup flow
-
-Current boot flow is:
-
-1. initialize LVGL
-2. initialize TFT and touch
-3. create the LVGL display and input device
-4. render the main menu
-5. start control input scanning
-6. initialize audio
-7. initialize synth
-8. initialize USB-host MIDI
-9. start the performance engine
-
-### Audio and synth behavior
-
-The active instrument is currently:
-
-- one monophonic synth voice with last-note priority
-- dual oscillator plus noise
-- filter and ADSR envelope
-- LFO with filter or pitch target
-- pitch bend
-- output volume control
-- selectable FX state for echo, reverb, and drive
-
-The larger audio graph still contains extra lanes beyond the active lead voice, but the playable instrument is centered on the lead path.
-
-### MIDI and transport behavior
-
-Current live behavior:
-
-- note input comes from `USBHost_t36`
-- pitch bend is active
-- arp and sequencer share the same internal transport
-- sequencer can live-record MIDI notes into the active step while record is armed
-- transport is currently internal-clock only
-
-### LVGL timing
-
-The firmware now advances LVGL using elapsed `millis()` time, not a fake fixed increment. The draw buffer lives in `DMAMEM` to fit comfortably on Teensy 4.1.
-
 ## Practical UI Rules
 
 Use these rules when extending the instrument:
@@ -412,34 +357,16 @@ Use these rules when extending the instrument:
 - keep color accents page-specific and stable
 - treat the sequencer as a hands-on grid, not a text editor
 
-## Current Gaps
-
-The current implementation is already functional, but these limits are still real:
-
-- no preset save/load yet
-- joystick axes still unused
-- no external MIDI clock sync yet
-- sequencer tie state exists in data but is not surfaced in the current UI
-- the broader multi-lane audio graph is not yet exposed as a multi-part instrument
-
-## Next Engineering Steps
-
-1. Add preset storage for patch, FX, and sequence state.
-2. Expose sequencer tie and rest editing without making the step page crowded.
-3. Decide whether joystick axes should get a dedicated performance role or remain unused.
-4. Add external MIDI clock sync only after the internal transport workflow feels solid on hardware.
-5. Expand the instrument only through the existing page-based panel model.
-
 ## Bottom Line
 
-The current firmware is no longer a placeholder menu. It already behaves like a compact instrument panel with:
+The current firmware behaves like a compact instrument panel with:
 
 - eight touch pages
 - five context-sensitive knobs
 - one confirm button
-- a mono synth engine
-- active FX
-- an arpeggiator
-- a 16-step sequencer
+- color-coded tabs
+- per-page pot cards
+- page-specific touch actions
+- a dedicated sequencer grid view
 
-Any future documentation or agent guidance should describe and extend that implemented panel model directly, without leaning on external synthesizer examples.
+Future documentation or agent guidance should keep describing that implemented panel model directly.

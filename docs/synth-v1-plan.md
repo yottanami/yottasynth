@@ -2,20 +2,23 @@
 
 ## Summary
 
-The current firmware implements the first integrated Yottasynth instrument shell on Teensy 4.1:
+This document is the practical reference for the current panel structure and touch UI.
 
-- mono synth engine
-- eight-tab touch UI
+The implemented interface provides:
+
+- eight tabs
 - five context-sensitive pots
 - joystick push-button as `OK / Confirm`
-- internal BPM transport
-- arpeggiator
-- 16-step monophonic sequencer with live MIDI record
-- active FX page with `echo`, `reverb`, and `drive`
-
-This document is the practical runtime reference for the current implementation.
+- one main panel area that changes by page
+- a dedicated sequencer grid view
 
 ## Hardware Control Map
+
+Source of truth note:
+
+- the active mux and panel mapping in code is the valid mapping
+- board design documents may still reflect an older mux wiring layout
+- if there is any conflict, follow the current firmware implementation
 
 - mux select pins: `14 / 15 / 16 / 17`
 - mux signal pin: `22`
@@ -59,34 +62,10 @@ Joystick axes are intentionally unused in v1.
 
 The `OK` button confirms pattern clear when the sequencer page is waiting for confirmation.
 
-## Engine Behavior
+## Interaction Rules
 
-- synth voice is mono with last-note priority
-- pitch bend is active from USB host MIDI
-- arpeggiator and sequencer share the same internal transport
-- sequencer playback takes ownership of generated notes while running
-- live MIDI record writes incoming notes into the current sequencer playhead step when record is armed
-- touch is stabilized in firmware before LVGL sees presses and moves
-- the five pots are actively scanned through the mux during normal runtime
-- LVGL timing uses elapsed `millis()`
-- the LVGL draw buffer lives in `DMAMEM` to stay within Teensy RAM1 limits
-
-## Known Limits
-
-- no preset save/load yet
-- no joystick axis behavior yet
-- no external MIDI clock sync yet
-- sequencer is monophonic and does not expose tie editing in the UI yet
-
-## Validation
-
-Current verification:
-
-- `pio run` passes for `teensy41`
-
-Recommended on-device checks:
-
-- verify all five knobs follow the expected channel order
-- confirm `C7` is the correct joystick push-button input on hardware
-- verify touch hit targets feel comfortable on the physical panel
-- listen for zipper noise or over-sensitive smoothing on fast knob moves
+- the five pots stay active and remap by page
+- the touch screen is the main navigation and action surface
+- the joystick `OK` button is reserved for confirmations such as sequence clear
+- sequencer step buttons use first tap to select and second tap to toggle
+- page accent colors should stay stable across the whole interface

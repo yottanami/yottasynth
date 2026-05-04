@@ -1,45 +1,105 @@
-# Yottasynth
+# Yottasynth: Open Hardware Touchscreen Synth with Persian/Iranian Tunings
 
-Yottasynth is an under-development digital synthesizer. It is an open hardware
-project built around an ARM microcontroller, with custom hardware, 3D-printed
-parts, and ongoing firmware development.
+Yottasynth is an open hardware touchscreen synth with a compact page-based control surface, five context-sensitive knobs, an arpeggiator, a step sequencer, and support for Persian/Iranian music tunings.
+
+یوتاسینث یک سینت‌سایزر دیجیتال متن‌باز با رابط لمسی، سکوئنسر، آرپژیاتور و پشتیبانی از کوک‌های موسیقی ایرانی است. این ساز امکان انتخاب کوک‌های مرتبط با دستگاه‌ها و آوازهای ایرانی را فراهم می‌کند تا برای اجرا و طراحی صدا در فضای موسیقی ایرانی مناسب‌تر باشد.
 
 ![Yottasynth prototype](etc/yottasynth.jpg)
 ![Yottasynth board](etc/board.jpg)
 
-## Status
+## What It Is
 
-This is a work-in-progress journey to build a full synth.
+The current firmware is a playable mono synth instrument with:
+
+- a touch-first panel UI
+- five context-sensitive knobs
+- arpeggiator
+- 16-step sequencer
+- three effect modes: `Echo`, `Reverb`, and `Drive`
+- selectable Persian scale tunings
+
+## Current Features
+
+- `PLAY`, `OSC`, `FILT`, `MOD`, `FX`, `ARP`, `SEQ`, and `SET` pages
+- mono synth voice with dual oscillators, noise, filter, envelope, glide, and LFO
+- page-specific touch actions and knob mappings
+- internal BPM transport
+- arpeggiator with mode, division, gate, octave range, and latch
+- 16-step sequencer with step selection, bank switching, swing, and live MIDI record
+- effect editing with page-dependent controls
+- output volume and tuning selection from the settings page
+- Persian scale support through alternate tunings
+- joystick push button used as `OK / Confirm`
+
+## Persian / Iranian Tunings
+
+The current tuning list includes:
+
+- `Standard`
+- `Shur`
+- `Abuata`
+- `Dashti`
+- `Bayat-e Tork`
+- `Afshari`
+- `Segah`
+- `Chahargah`
+- `Homayun`
+- `Bayat-e Esfahan`
+- `Nava`
+- `Mahur`
+- `Rast-Panjgah`
+
+## How It Works
+
+Yottasynth is organized as one compact panel split into pages. The touch screen is used to switch pages and trigger actions, while the five physical knobs always control the five parameters shown on screen for the current page.
+
+In normal use, a MIDI controller feeds notes into the synth engine through USB host MIDI. You shape the sound on the synth pages, switch to `ARP` for rhythmic note patterns, use `SEQ` for step programming and live record, and adjust global volume or tuning in `SET`. When a destructive action needs confirmation, the joystick push button acts as `OK`.
+
+## Interface Summary
+
+- top bar: page title plus compact status
+- middle panel: parameter cards and touch actions
+- bottom bar: eight color-coded tabs
+
+Page layout:
+
+- `PLAY`: quick performance controls
+- `OSC`: oscillator mix, noise, octave, detune, and waveform changes
+- `FILT`: filter and envelope shaping
+- `MOD`: LFO, bend range, and modulation target
+- `FX`: echo, reverb, or drive editing
+- `ARP`: arpeggiator setup
+- `SEQ`: 16-step sequencing
+- `SET`: output volume, tuning, and input test entry
+
+## User Guide
+
+For a user-perspective walkthrough of the panel, controls, pages, and sequencing flow, see [docs/user-guide.md](docs/user-guide.md).
 
 ## Hardware + 3D
 
-- Board design files: `etc/board/` (open with KiCad)
-- Enclosure STL files: `etc/enclosure/` (print with your slicer app)
-- Touch screen interface and ARM-based digital synth core
+- board design files: `etc/board/`
+- touch-driven panel firmware: `src/`
+- headers and shared definitions: `include/`
+- project docs: `docs/`
+
+## Status
+
+This is still an active work-in-progress project, but the firmware already implements the main instrument shell and core performance workflow.
 
 ## Contributing
 
-Contributions are welcome. Feel free to open an issue or a PR if you want to
-help with firmware, hardware, or design.
+Contributions are welcome. Feel free to open an issue or a PR if you want to help with firmware, hardware, or design.
 
 ## Issues
 
-If you spot a bug or want to request a feature, please create an issue:
 https://github.com/yottanami/yottainst/issues/new
-
-## Repo Layout
-
-- `src/`: firmware source code
-- `include/`: headers
-- `lib/`: libraries
-- `test/`: tests
-- `etc/`: hardware and 3D design sources
 
 ## Contact
 
 https://yottanami.com
 
-## Buy Me a Coffee
+## Support
 
 - GitHub Sponsors: https://github.com/sponsors/yottanami
 - Ko-fi: https://ko-fi.com/yottanami
