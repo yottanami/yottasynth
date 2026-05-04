@@ -28,6 +28,7 @@ constexpr uint32_t kPageColors[8] = {
     0x2F855A, 0x0EA5A4, 0xD97706, 0x2563EB,
     0x7C3AED, 0x9333EA, 0xDC2626, 0x475569,
 };
+constexpr unsigned long kSequencerTouchCooldownMs = 120;
 
 float clampUnit(float value) {
   if (value < 0.0f) {
@@ -233,6 +234,10 @@ const char *potName(uint8_t index) {
 void disableScroll(lv_obj_t *obj) {
   lv_obj_clear_flag(obj, LV_OBJ_FLAG_SCROLLABLE);
 }
+
+void stabilizeTouchButton(lv_obj_t *obj) {
+  lv_obj_add_flag(obj, LV_OBJ_FLAG_PRESS_LOCK);
+}
 }
 
 MainMenu::MainMenu() {
@@ -330,6 +335,7 @@ void MainMenu::render() {
 
   for (uint8_t index = 0; index < kActionCount; ++index) {
     action_buttons_[index] = lv_button_create(content_panel_);
+    stabilizeTouchButton(action_buttons_[index]);
     lv_obj_set_size(action_buttons_[index], 145, 26);
     lv_obj_set_pos(action_buttons_[index], (index % 2U) ? 153 : 6, index < 2U ? 70 : 102);
     lv_obj_add_event_cb(action_buttons_[index], actionEventHandler, LV_EVENT_CLICKED,
@@ -343,6 +349,7 @@ void MainMenu::render() {
 
   for (uint8_t index = 0; index < kSeqButtonCount; ++index) {
     seq_step_buttons_[index] = lv_button_create(content_panel_);
+    stabilizeTouchButton(seq_step_buttons_[index]);
     const int col = index % 4;
     const int row = index / 4;
     lv_obj_set_size(seq_step_buttons_[index], 72, 34);
@@ -367,6 +374,7 @@ void MainMenu::render() {
 
   for (uint8_t index = 0; index < kTabCount; ++index) {
     tab_buttons_[index] = lv_button_create(tab_bar);
+    stabilizeTouchButton(tab_buttons_[index]);
     lv_obj_set_size(tab_buttons_[index], 36, 32);
     lv_obj_set_pos(tab_buttons_[index], 8 + index * 38, 6);
     lv_obj_add_event_cb(tab_buttons_[index], tabEventHandler, LV_EVENT_CLICKED,
@@ -505,6 +513,10 @@ void MainMenu::actionEventHandler(lv_event_t *event) {
     return;
   }
 
+  if (state.ui.page == PageId::SEQ && !g_main_menu->allowSequencerTouchAction()) {
+    return;
+  }
+
   const uint8_t action_index =
       static_cast<uint8_t>(reinterpret_cast<uintptr_t>(lv_event_get_user_data(event)));
   g_main_menu->handleAction(action_index);
@@ -512,6 +524,10 @@ void MainMenu::actionEventHandler(lv_event_t *event) {
 
 void MainMenu::seqStepEventHandler(lv_event_t *event) {
   if (lv_event_get_code(event) != LV_EVENT_CLICKED || g_main_menu == nullptr) {
+    return;
+  }
+
+  if (!g_main_menu->allowSequencerTouchAction()) {
     return;
   }
 
@@ -528,6 +544,17 @@ void MainMenu::seqStepEventHandler(lv_event_t *event) {
     state.sequencer.selected_step = step_index;
   }
   state.markDirty();
+}
+
+bool MainMenu::allowSequencerTouchAction() {
+  const unsigned long now = millis();
+  if (last_seq_touch_action_ms_ != 0 &&
+      (now - last_seq_touch_action_ms_) < kSequencerTouchCooldownMs) {
+    return false;
+  }
+
+  last_seq_touch_action_ms_ = now;
+  return true;
 }
 
 void MainMenu::setPage(PageId page) {

@@ -33,6 +33,7 @@ class MainMenu {
   void refreshActionButtons();
   void refreshSequencerButtons();
   void refreshVisibility();
+  bool allowSequencerTouchAction();
   void handleAction(uint8_t action_index);
   void setSelectedStepValue(bool set_note, float normalized);
 
@@ -56,6 +57,7 @@ class MainMenu {
                                        nullptr, nullptr, nullptr, nullptr};
   lv_obj_t *tab_labels_[kTabCount] = {nullptr, nullptr, nullptr, nullptr,
                                       nullptr, nullptr, nullptr, nullptr};
+  unsigned long last_seq_touch_action_ms_ = 0;
 };
 
 extern MainMenu main_menu;
