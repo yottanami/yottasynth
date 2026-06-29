@@ -23,11 +23,11 @@ The current firmware is a playable mono synth instrument with:
 - `PLAY`, `OSC`, `FILT`, `MOD`, `FX`, `ARP`, `SEQ`, and `SET` pages
 - mono synth voice with dual oscillators, noise, filter, envelope, glide, and LFO
 - page-specific touch actions and knob mappings
-- internal BPM transport
+- internal BPM transport, or external MIDI clock sync over USB
 - arpeggiator with mode, division, gate, octave range, and latch
 - 16-step sequencer with step selection, bank switching, swing, and live MIDI record
 - effect editing with page-dependent controls
-- output volume and tuning selection from the settings page
+- output volume, tuning, and clock-source (internal / external) selection from the settings page
 - Persian scale support through alternate tunings
 - joystick push button used as `OK / Confirm`
 
@@ -55,6 +55,13 @@ Yottasynth is organized as one compact panel split into pages. The touch screen 
 
 In normal use, a MIDI controller feeds notes into the synth engine through USB host MIDI. You shape the sound on the synth pages, switch to `ARP` for rhythmic note patterns, use `SEQ` for step programming and live record, and adjust global volume or tuning in `SET`. When a destructive action needs confirmation, the joystick push button acts as `OK`.
 
+The transport (sequencer and arpeggiator) normally runs on its own internal BPM. Set `SYNC` to `EXT` on the `SET` page to slave it to an external MIDI clock over USB instead. Two USB paths are supported without any hardware change:
+
+- the **USB host port** (alongside the keyboard, through a USB hub) for standalone gear such as an Ableton Move
+- the **native USB port** (the same cable used to upload firmware) for a computer / DAW such as Ableton Live
+
+In external mode the synth follows the host's tempo and its start / stop / continue transport.
+
 ## Interface Summary
 
 - top bar: page title plus compact status
@@ -70,7 +77,7 @@ Page layout:
 - `FX`: echo, reverb, or drive editing
 - `ARP`: arpeggiator setup
 - `SEQ`: 16-step sequencing
-- `SET`: output volume, tuning, and input test entry
+- `SET`: output volume, tuning, clock source (internal / external sync), and input test entry
 
 ## User Guide
 

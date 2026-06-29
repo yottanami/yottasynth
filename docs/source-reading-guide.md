@@ -81,6 +81,8 @@ struct TransportState {
   bool running = false;
   float swing = 0.0f;
   uint8_t step_index = 0;
+  ClockSource clock_source = ClockSource::INTERNAL;
+  bool ext_clock_present = false;
 };
 ```
 

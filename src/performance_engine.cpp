@@ -45,6 +45,23 @@ void PerformanceEngine::update() {
   syncTransportState();
   releaseGeneratedNoteIfDue();
 
+  if (externalClock()) {
+    // Steps are driven by incoming MIDI clock ticks, not micros(). Here we only
+    // detect a clock dropout so the indicator clears and the transport stops.
+    if (state_->transport.ext_clock_present && clock_timing_valid_ &&
+        static_cast<long>(micros() - last_clock_us_) > 500000L) {
+      state_->transport.ext_clock_present = false;
+      clock_timing_valid_ = false;
+      if (state_->transport.running) {
+        state_->transport.running = false;
+        transport_running_cache_ = false;
+        clearGeneratedNote();
+      }
+      state_->markDirty();
+    }
+    return;
+  }
+
   if (!state_->transport.running) {
     return;
   }
@@ -55,6 +72,76 @@ void PerformanceEngine::update() {
     advanceTransportStep();
     ++safety;
   }
+}
+
+bool PerformanceEngine::externalClock() const {
+  return state_ != nullptr && state_->transport.clock_source == ClockSource::EXTERNAL;
+}
+
+void PerformanceEngine::onMidiClockTick() {
+  if (state_ == nullptr || !externalClock()) {
+    return;
+  }
+
+  const unsigned long now = micros();
+  if (clock_timing_valid_) {
+    const unsigned long delta = now - last_clock_us_;
+    if (delta > 0) {
+      // 24 PPQN: a quarter note spans 24 ticks. BPM = 60e6 / (delta_us * 24).
+      const float bpm = 60000000.0f / (static_cast<float>(delta) * 24.0f);
+      if (bpm >= 20.0f && bpm <= 400.0f) {
+        const float smoothed = 0.8f * static_cast<float>(state_->transport.bpm) + 0.2f * bpm;
+        state_->transport.bpm = static_cast<uint16_t>(smoothed + 0.5f);
+      }
+    }
+  }
+  last_clock_us_ = now;
+  clock_timing_valid_ = true;
+  state_->transport.ext_clock_present = true;
+
+  if (!state_->transport.running) {
+    return;
+  }
+
+  if (clock_tick_count_ == 0) {
+    fireStep();
+  }
+  clock_tick_count_ = static_cast<uint8_t>((clock_tick_count_ + 1U) % kClocksPerStep);
+}
+
+void PerformanceEngine::onMidiStart() {
+  if (state_ == nullptr || !externalClock()) {
+    return;
+  }
+  state_->transport.step_index = 0;
+  state_->sequencer.playhead = 0;
+  clock_tick_count_ = 0;
+  arp_division_counter_ = 0;
+  arp_index_ = -1;
+  state_->transport.running = true;
+  state_->transport.ext_clock_present = true;
+  transport_running_cache_ = true;
+  state_->markDirty();
+}
+
+void PerformanceEngine::onMidiContinue() {
+  if (state_ == nullptr || !externalClock()) {
+    return;
+  }
+  state_->transport.running = true;
+  state_->transport.ext_clock_present = true;
+  transport_running_cache_ = true;
+  state_->markDirty();
+}
+
+void PerformanceEngine::onMidiStop() {
+  if (state_ == nullptr || !externalClock()) {
+    return;
+  }
+  state_->transport.running = false;
+  transport_running_cache_ = false;
+  clearGeneratedNote();
+  state_->markDirty();
 }
 
 void PerformanceEngine::onMidiNoteOn(byte, byte note, byte velocity) {
@@ -170,10 +257,17 @@ void PerformanceEngine::advanceTransportStep() {
     return;
   }
 
-  const uint8_t current_step = state_->transport.step_index;
-  const unsigned long interval = stepIntervalUs(state_->transport, current_step);
+  const unsigned long interval = stepIntervalUs(state_->transport, state_->transport.step_index);
   next_step_due_us_ += interval;
+  fireStep();
+}
 
+void PerformanceEngine::fireStep() {
+  if (state_ == nullptr) {
+    return;
+  }
+
+  const uint8_t current_step = state_->transport.step_index;
   state_->sequencer.playhead = current_step % clampStepLength(state_->sequencer.length);
 
   if (state_->sequencer.enabled) {

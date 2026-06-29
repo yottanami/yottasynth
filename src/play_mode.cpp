@@ -9,11 +9,31 @@ PlayMode::PlayMode() {
   // Constructor
 }
 
-// USB Host stack objects
+// USB Host stack objects.  Two MIDIDevice instances let a keyboard and a
+// clock-sending device (e.g. Ableton Move) coexist through a USB hub on the
+// single host port; either can carry notes or clock.
 USBHost myusb;
 USBHub hub1(myusb);
 USBHub hub2(myusb);
 MIDIDevice midi1(myusb);
+MIDIDevice midi2(myusb);
+
+template <typename Device>
+void PlayMode::registerHandlers(Device &device) {
+  device.setHandleNoteOn(myNoteOn);
+  device.setHandleNoteOff(myNoteOff);
+  device.setHandleAfterTouchPoly(myAfterTouchPoly);
+  device.setHandleControlChange(myControlChange);
+  device.setHandleProgramChange(myProgramChange);
+  device.setHandleAfterTouchChannel(myAfterTouchChannel);
+  device.setHandlePitchChange(myPitchChange);
+
+  // External clock / transport sync.
+  device.setHandleClock(myClock);
+  device.setHandleStart(myStart);
+  device.setHandleContinue(myContinue);
+  device.setHandleStop(myStop);
+}
 
 void PlayMode::setup() {
   Serial.begin(115200);
@@ -26,28 +46,22 @@ void PlayMode::setup() {
   delay(10);
   myusb.begin();
 
-  // Register handlers - these names resolve to PlayMode:: static methods
-  midi1.setHandleNoteOn(myNoteOn);
-  midi1.setHandleNoteOff(myNoteOff);
-  midi1.setHandleAfterTouchPoly(myAfterTouchPoly);
-  midi1.setHandleControlChange(myControlChange);
-  midi1.setHandleProgramChange(myProgramChange);
-  midi1.setHandleAfterTouchChannel(myAfterTouchChannel);
-  midi1.setHandlePitchChange(myPitchChange);
+  // Host-side devices (MIDI keyboard, and a second device through a hub).
+  registerHandlers(midi1);
+  registerHandlers(midi2);
 
-  // Only one of these System Exclusive handlers will actually be used.
-  // If both are set, the 3-argument chunked version is called.
+  // Device-side: Teensy enumerates as a USB-MIDI device on the native port
+  // (USB_MIDI_SERIAL), so a computer / DAW such as Ableton Live can send clock
+  // and notes over the same cable used to upload code.
+  registerHandlers(usbMIDI);
+
+  // Extra host-side handlers kept on midi1 for diagnostics / completeness.
   midi1.setHandleSystemExclusive(mySystemExclusiveChunk);
   midi1.setHandleSystemExclusive(mySystemExclusive);
-
   midi1.setHandleTimeCodeQuarterFrame(myTimeCodeQuarterFrame);
   midi1.setHandleSongPosition(mySongPosition);
   midi1.setHandleSongSelect(mySongSelect);
   midi1.setHandleTuneRequest(myTuneRequest);
-  midi1.setHandleClock(myClock);
-  midi1.setHandleStart(myStart);
-  midi1.setHandleContinue(myContinue);
-  midi1.setHandleStop(myStop);
   midi1.setHandleActiveSensing(myActiveSensing);
   midi1.setHandleSystemReset(mySystemReset);
 
@@ -57,13 +71,22 @@ void PlayMode::setup() {
 }
 
 void PlayMode::loop() {
-  // The handler functions are called when midi1 reads data.  They
-  // will not be called automatically.  You must call midi1.read()
-  // regularly from loop() for midi1 to actually read incoming
-  // data and run the handler functions as messages arrive.
+  // The handler functions are called when the MIDI sources read data.  They
+  // will not be called automatically; we must poll each source regularly from
+  // loop() for handlers to run as messages arrive.
   myusb.Task();
   midi1.read();
-  AppState::instance().updateMidiDevice(static_cast<bool>(midi1), midi1.idVendor(), midi1.idProduct());
+  midi2.read();
+  usbMIDI.read();
+
+  const bool connected = static_cast<bool>(midi1) || static_cast<bool>(midi2);
+  if (static_cast<bool>(midi1)) {
+    AppState::instance().updateMidiDevice(true, midi1.idVendor(), midi1.idProduct());
+  } else if (static_cast<bool>(midi2)) {
+    AppState::instance().updateMidiDevice(true, midi2.idVendor(), midi2.idProduct());
+  } else {
+    AppState::instance().updateMidiDevice(connected, 0, 0);
+  }
 }
 
 // Handlers implemented as PlayMode:: static methods
@@ -130,15 +153,19 @@ void PlayMode::myTuneRequest() {
 }
 
 void PlayMode::myClock() {
+  performance_engine.onMidiClockTick();
 }
 
 void PlayMode::myStart() {
+  performance_engine.onMidiStart();
 }
 
 void PlayMode::myContinue() {
+  performance_engine.onMidiContinue();
 }
 
 void PlayMode::myStop() {
+  performance_engine.onMidiStop();
 }
 
 void PlayMode::myActiveSensing() {

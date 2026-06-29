@@ -14,13 +14,20 @@ class PerformanceEngine {
   void onMidiNoteOn(byte channel, byte note, byte velocity);
   void onMidiNoteOff(byte channel, byte note, byte velocity);
   void onMidiPitchBend(byte channel, int pitch);
+  void onMidiClockTick();
+  void onMidiStart();
+  void onMidiContinue();
+  void onMidiStop();
   void stopTransport();
   void clearHeldNotes();
 
  private:
   static constexpr uint8_t kHeldCapacity = 12;
+  static constexpr uint8_t kClocksPerStep = 6;  // 24 PPQN / 4 (16th-note step)
 
+  bool externalClock() const;
   void syncTransportState();
+  void fireStep();
   void advanceTransportStep();
   void handleSequencerStep();
   void handleArpStep();
@@ -45,6 +52,9 @@ class PerformanceEngine {
   int8_t arp_direction_ = 1;
   uint8_t arp_division_counter_ = 0;
   bool transport_running_cache_ = false;
+  uint8_t clock_tick_count_ = 0;
+  unsigned long last_clock_us_ = 0;
+  bool clock_timing_valid_ = false;
 };
 
 extern PerformanceEngine performance_engine;

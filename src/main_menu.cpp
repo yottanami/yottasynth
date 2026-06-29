@@ -193,6 +193,8 @@ void formatPotValue(char *buffer, size_t size, uint8_t index) {
                  static_cast<unsigned>(roundf(state.audio.output_volume * 100.0f)));
       } else if (index == 1) {
         snprintf(buffer, size, "%s", tuningLabel(state.patch.tuning));
+      } else if (index == 2) {
+        snprintf(buffer, size, "%s", clockSourceLabel(state.transport.clock_source));
       } else {
         buffer[0] = '\0';
       }
@@ -207,7 +209,7 @@ const char *potName(uint8_t index) {
   static const char *kModNames[5] = {"RATE", "DEPTH", "GLIDE", "BEND", "TARGET"};
   static const char *kArpNames[5] = {"BPM", "DIV", "GATE", "OCT", "MODE"};
   static const char *kSeqNames[5] = {"BPM", "LEN", "SWING", "NOTE", "GATE"};
-  static const char *kSettingsNames[5] = {"VOL", "TUNE", "", "", ""};
+  static const char *kSettingsNames[5] = {"VOL", "TUNE", "SYNC", "", ""};
 
   switch (state.ui.page) {
     case PageId::PLAY:
@@ -476,6 +478,9 @@ void MainMenu::handlePotChange(uint8_t index, float value) {
       if (index == 1) {
         state.patch.tuning = static_cast<TuningId>(discreteIndex(value, tuningCount()));
       }
+      if (index == 2) {
+        state.transport.clock_source = static_cast<ClockSource>(discreteIndex(value, 2));
+      }
       break;
   }
 
@@ -586,9 +591,10 @@ void MainMenu::refreshStatusBar() {
 
   char status_text[96];
   if (state.ui.page == PageId::SETTINGS) {
-    snprintf(status_text, sizeof(status_text), "VOL %u%%  TUNE %s",
+    snprintf(status_text, sizeof(status_text), "VOL %u%%  TUNE %s  SYNC %s",
              static_cast<unsigned>(roundf(state.audio.output_volume * 100.0f)),
-             tuningLabel(state.patch.tuning));
+             tuningLabel(state.patch.tuning),
+             clockSourceLabel(state.transport.clock_source));
   } else if (state.ui.page == PageId::OSC_MIX) {
     snprintf(status_text, sizeof(status_text), "W1 %s  W2 %s  N %u%%",
              oscWaveLabel(state.patch.osc1_wave), oscWaveLabel(state.patch.osc2_wave),
@@ -597,8 +603,11 @@ void MainMenu::refreshStatusBar() {
     snprintf(status_text, sizeof(status_text), "FX %s %s", fxModeLabel(state.fx.mode),
              yesNo(state.fx.enabled));
   } else {
-    snprintf(status_text, sizeof(status_text), "%uBPM %s A:%s S:%s",
-             state.transport.bpm, state.transport.running ? "RUN" : "STOP",
+    const bool ext = state.transport.clock_source == ClockSource::EXTERNAL;
+    const char *clock_tag =
+        ext ? (state.transport.ext_clock_present ? "EXT" : "EXT?") : "INT";
+    snprintf(status_text, sizeof(status_text), "%uBPM %s %s A:%s S:%s",
+             state.transport.bpm, clock_tag, state.transport.running ? "RUN" : "STOP",
              yesNo(state.arp.enabled), yesNo(state.sequencer.enabled));
   }
   lv_label_set_text(status_label_, status_text);
@@ -628,9 +637,15 @@ void MainMenu::refreshPotCards() {
       } else if (index == 1) {
         lv_obj_clear_flag(pot_cards_[index], LV_OBJ_FLAG_HIDDEN);
         lv_obj_set_pos(pot_cards_[index], 72, 0);
-        lv_obj_set_size(pot_cards_[index], 236, 56);
-        lv_obj_set_width(pot_name_labels_[index], 228);
-        lv_obj_set_width(pot_value_labels_[index], 228);
+        lv_obj_set_size(pot_cards_[index], 158, 56);
+        lv_obj_set_width(pot_name_labels_[index], 150);
+        lv_obj_set_width(pot_value_labels_[index], 150);
+      } else if (index == 2) {
+        lv_obj_clear_flag(pot_cards_[index], LV_OBJ_FLAG_HIDDEN);
+        lv_obj_set_pos(pot_cards_[index], 234, 0);
+        lv_obj_set_size(pot_cards_[index], 74, 56);
+        lv_obj_set_width(pot_name_labels_[index], 66);
+        lv_obj_set_width(pot_value_labels_[index], 66);
       } else {
         lv_obj_add_flag(pot_cards_[index], LV_OBJ_FLAG_HIDDEN);
         continue;

@@ -291,6 +291,24 @@ To change tuning:
 2. turn the `TUNE` knob
 3. stop on the tuning you want
 
+## Syncing to an External Clock
+
+By default the transport runs on its own internal BPM. To slave the sequencer and
+arpeggiator to an external MIDI clock instead:
+
+1. open `SET`
+2. turn the `SYNC` knob to `EXT`
+3. connect the clock source over USB:
+   - a standalone device (e.g. Ableton Move) into the USB host port, through a USB
+     hub alongside your keyboard, or
+   - a computer / DAW (e.g. Ableton Live) over the same USB cable used to upload firmware
+4. start playback on the external device
+
+When synced, the top status bar shows `EXT` (or `EXT?` while no clock is arriving),
+the displayed BPM follows the incoming clock, and the external device's start /
+stop / continue controls drive the transport. Set `SYNC` back to `INT` to return
+to the internal clock.
+
 ## Quick Start
 
 1. power the instrument
@@ -309,4 +327,3 @@ From a user perspective, these are the main current limits:
 - the synth is monophonic
 - the sequencer is monophonic
 - sequence clear uses confirm, but broader preset management is not implemented yet
-- external MIDI clock sync is not exposed in the current workflow

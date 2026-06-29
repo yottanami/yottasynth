@@ -42,6 +42,11 @@ enum class FxMode : uint8_t {
   DRIVE
 };
 
+enum class ClockSource : uint8_t {
+  INTERNAL = 0,
+  EXTERNAL
+};
+
 enum class TuningId : uint8_t {
   STANDARD = 0,
   SHUR,
@@ -85,6 +90,8 @@ struct TransportState {
   bool running = false;
   float swing = 0.0f;
   uint8_t step_index = 0;
+  ClockSource clock_source = ClockSource::INTERNAL;
+  bool ext_clock_present = false;
 };
 
 struct ArpState {
@@ -198,6 +205,7 @@ class AppState {
 const char *pageTitle(PageId page);
 const char *arpModeLabel(ArpMode mode);
 const char *fxModeLabel(FxMode mode);
+const char *clockSourceLabel(ClockSource source);
 const char *lfoTargetLabel(LfoTarget target);
 const char *oscWaveLabel(OscWave wave);
 const char *tuningLabel(TuningId tuning);

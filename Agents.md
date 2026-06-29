@@ -1,5 +1,21 @@
 # Yottasynth Agent Notes
 
+## Keep Docs In Sync (read first)
+
+Whenever you change firmware behavior, the control surface, pages, knob/touch
+mappings, or hardware/wiring, update the documentation in the **same change**.
+Do not treat docs as a follow-up. The files to check every time:
+
+- `README.md` — features, page summaries, "How It Works"
+- `Agents.md` (this file) — panel/page model, status bar, control maps
+- `docs/user-guide.md` — user-facing workflow and current limits
+- `docs/codebase-guide.md` — module/data-model/flow descriptions
+- `docs/source-reading-guide.md` — struct snippets and reading order
+
+If a feature removes a stated limitation (e.g. "X is not exposed"), delete that
+line rather than leaving it stale. After firmware edits, grep the docs for the
+feature you touched and reconcile any mentions before finishing.
+
 ## Scope
 
 Treat the instrument as a **touch-first panel with hardware assist controls**.
@@ -68,10 +84,10 @@ The top bar should always show:
 
 Current behavior:
 
-- most pages show BPM, transport state, arp state, and sequencer state
+- most pages show BPM, clock source (`INT` / `EXT` / `EXT?`), transport state, arp state, and sequencer state
 - `OSC / MIX` shows oscillator wave summary and noise amount
 - `FX` shows effect mode and enabled/bypassed state
-- `SETTINGS` shows output volume and current tuning
+- `SETTINGS` shows output volume, current tuning, and clock source
 - input-test mode shows service text instead of musical status
 
 ### Main content panel
@@ -295,12 +311,19 @@ Knobs:
 
 - `VOL`
 - `TUNE`
+- `SYNC` (clock source: `INT` / `EXT`)
 
 Touch actions:
 
 - `TEST PAGE`
 
-Unlike the other pages, settings intentionally collapses to two active pot cards and one service entry point.
+Unlike the other pages, settings intentionally collapses to a few active pot cards and one service entry point.
+
+Clock source notes:
+
+- `INT` runs the transport on the internal BPM; `EXT` slaves the sequencer and arpeggiator to an external MIDI clock over USB
+- external clock is received on both the host-side `MIDIDevice` instances (keyboard + a device through a hub) and the device-side `usbMIDI` (a DAW over the native USB port)
+- this is firmware-only; no PCB change is required because the Teensy 4.1 already exposes both a USB host port and a USB-MIDI device port
 
 ### Input test overlay
 

@@ -252,8 +252,12 @@ Contains tempo and step timing state:
 - whether the transport is running
 - swing amount
 - current step index
+- clock source (`INTERNAL` or `EXTERNAL`)
+- whether an external clock is currently present
 
-This transport is shared by both the sequencer and arpeggiator.
+This transport is shared by both the sequencer and arpeggiator. When the clock
+source is `EXTERNAL`, step timing is driven by incoming MIDI clock ticks instead
+of the internal `micros()` scheduler (see section 10.2).
 
 #### `ArpState`
 
@@ -492,7 +496,17 @@ It creates global USB host stack objects:
 
 - `USBHost myusb`
 - two `USBHub` objects
-- one `MIDIDevice midi1`
+- two `MIDIDevice` instances (`midi1`, `midi2`)
+
+Two host-side `MIDIDevice` instances let a keyboard and a clock-sending device
+(for example an Ableton Move) coexist through a USB hub on the single host port;
+either can carry notes or clock.
+
+MIDI also arrives from the **device side**: because the build enables
+`-D USB_MIDI_SERIAL`, the Teensy enumerates as a USB-MIDI device on its native
+port, so a computer / DAW such as Ableton Live can send notes and clock over the
+same cable used to upload firmware. That stream is read through the core
+`usbMIDI` object.
 
 ### 8.2 What `setup()` does
 
@@ -502,11 +516,14 @@ It:
 2. starts the USB host stack
 3. registers callback handlers for many MIDI message types
 
-Only a few callbacks currently have real behavior:
+A `registerHandlers(...)` template applies the common handlers (notes, pitch
+bend, and clock / start / continue / stop) uniformly to `midi1`, `midi2`, and the
+device-side `usbMIDI`. Callbacks with real behavior:
 
 - note on
 - note off
 - pitch bend
+- clock, start, continue, stop (transport sync, active only when clock source is `EXTERNAL`)
 
 Most others are stubbed out with unused-parameter handling.
 
@@ -525,6 +542,11 @@ When pitch bend arrives:
 
 1. `PerformanceEngine::onMidiPitchBend(...)` is called
 
+When a clock / start / continue / stop message arrives:
+
+1. the matching `PerformanceEngine::onMidiClockTick / onMidiStart / onMidiContinue / onMidiStop` is called
+2. these only drive the transport when the clock source is `EXTERNAL`
+
 ### 8.4 Polling model
 
 `PlayMode::loop()` must be called continuously.
@@ -532,7 +554,8 @@ When pitch bend arrives:
 It performs:
 
 - `myusb.Task()`
-- `midi1.read()`
+- `midi1.read()` and `midi2.read()` (host side)
+- `usbMIDI.read()` (device side)
 - `AppState::updateMidiDevice(...)`
 
 This is an important embedded pattern: the callbacks are only triggered because the code actively polls the device in the main loop.
@@ -698,13 +721,34 @@ Important details:
 
 This means the transport is grid-based and lightweight rather than sample-accurate or DAW-style complex.
 
+The work of triggering a single step (playhead update, sequencer/arp handling,
+step-index increment) lives in `fireStep()`. Internal timing calls it from
+`advanceTransportStep()` after computing the next due time; external sync calls it
+directly from clock ticks.
+
+#### External clock sync
+
+When the clock source is `EXTERNAL`, the internal `micros()` scheduler is skipped
+and the transport is driven by incoming MIDI clock instead:
+
+- MIDI clock is `24` PPQN, so `6` ticks advance one sixteenth-note step
+  (`kClocksPerStep`)
+- `onMidiClockTick()` estimates BPM from the spacing between ticks (smoothed) and
+  writes it back into `TransportState`, so gate lengths and the BPM readout stay correct
+- `onMidiStart` / `onMidiContinue` / `onMidiStop` map the host transport onto
+  `transport.running`
+- if clock messages stop arriving (~0.5s timeout) `ext_clock_present` clears and
+  the transport stops
+
 ### 10.3 Update loop
 
 `PerformanceEngine::update()`:
 
 1. syncs transport state changes
 2. releases generated notes whose gate time expired
-3. if transport is running:
+3. if the clock source is `EXTERNAL`:
+   skips internal step scheduling (steps fire from clock ticks) and only checks for clock dropout
+4. otherwise, if transport is running:
    advances one or more due steps
 
 The code includes a small safety limit so a slow loop iteration does not spend too long catching up.

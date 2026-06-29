@@ -13,6 +13,12 @@ class PlayMode {
   static void printBytes(const uint8_t *data, unsigned int size);
 
  private:
+  // Registers the common MIDI handlers on any device exposing the USBHost_t36 /
+  // usbMIDI setHandle* API (host-side MIDIDevice instances and the device-side
+  // usbMIDI object).  Defined in play_mode.cpp; instantiated there only.
+  template <typename Device>
+  static void registerHandlers(Device &device);
+
   // MIDI handlers (signatures aligned with USBHost_t36 and usbMIDI)
   static void myNoteOn(byte channel, byte note, byte velocity);
   static void myNoteOff(byte channel, byte note, byte velocity);

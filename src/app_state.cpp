@@ -156,6 +156,17 @@ const char *fxModeLabel(FxMode mode) {
   }
 }
 
+const char *clockSourceLabel(ClockSource source) {
+  switch (source) {
+    case ClockSource::INTERNAL:
+      return "INT";
+    case ClockSource::EXTERNAL:
+      return "EXT";
+    default:
+      return "INT";
+  }
+}
+
 const char *arpModeLabel(ArpMode mode) {
   switch (mode) {
     case ArpMode::UP:
