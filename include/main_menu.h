@@ -12,9 +12,10 @@ class MainMenu {
   void render();
   void loop();
   void handlePotChange(uint8_t index, float value);
-  void handleOkPress();
 
  private:
+  void clearSequence();
+
   static constexpr uint8_t kTabCount = 8;
   static constexpr uint8_t kActionCount = 4;
   static constexpr uint8_t kSeqButtonCount = 8;

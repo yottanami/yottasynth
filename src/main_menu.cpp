@@ -487,11 +487,7 @@ void MainMenu::handlePotChange(uint8_t index, float value) {
   state.markDirty();
 }
 
-void MainMenu::handleOkPress() {
-  if (!state.ui.confirm_clear_sequence) {
-    return;
-  }
-
+void MainMenu::clearSequence() {
   for (SequenceStep &step : state.sequencer.steps) {
     step.active = false;
     step.tie = false;
@@ -583,7 +579,7 @@ void MainMenu::refresh() {
 void MainMenu::refreshStatusBar() {
   if (state.ui.show_input_test) {
     lv_label_set_text(status_title_label_, "TEST PAGE");
-    lv_label_set_text(status_label_, "Touch, audio, MIDI, and mux diagnostics");
+    lv_label_set_text(status_label_, "Touch, knob, audio, and MIDI diagnostics");
     return;
   }
 
@@ -703,7 +699,7 @@ void MainMenu::refreshActionButtons() {
   }
 
   if (state.ui.page == PageId::SEQ && state.ui.confirm_clear_sequence) {
-    lv_label_set_text(action_labels_[3], "WAIT OK");
+    lv_label_set_text(action_labels_[3], "TAP AGAIN");
   }
 }
 
@@ -836,7 +832,13 @@ void MainMenu::handleAction(uint8_t action_index) {
         state.sequencer.record_armed = !state.sequencer.record_armed;
       }
       if (action_index == 2) state.sequencer.visible_bank ^= 1U;
-      if (action_index == 3) state.ui.confirm_clear_sequence = !state.ui.confirm_clear_sequence;
+      if (action_index == 3) {
+        if (state.ui.confirm_clear_sequence) {
+          clearSequence();
+        } else {
+          state.ui.confirm_clear_sequence = true;
+        }
+      }
       break;
     case PageId::SETTINGS:
       if (action_index == 0) {

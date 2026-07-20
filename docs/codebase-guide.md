@@ -36,8 +36,7 @@ The active runtime looks like this:
 ```text
 Hardware inputs
   |- touch controller
-  |- five pots through 74HC4067 mux
-  |- joystick push button through mux
+  |- five pots wired directly to analog pins 14/15/16/17/22
   |- USB MIDI device
   v
 Input and event layers
@@ -92,12 +91,12 @@ Two design choices define the whole project:
   LVGL panel UI and page-specific control mapping.
 
 - [`src/input_test_page.cpp`](../src/input_test_page.cpp) and [`include/input_test_page.h`](../include/input_test_page.h)
-  Hardware diagnostics page for touch, mux, direct analog pins, audio self-test, and MIDI status.
+  Hardware diagnostics page for touch, knobs, spare analog pins, audio self-test, and MIDI status.
 
 - [`include/settings.h`](../include/settings.h) and [`src/settings.cpp`](../src/settings.cpp)
   Small global mode tracker.
 
-- [`include/mux_pins.h`](../include/mux_pins.h)
+- [`include/knob_pins.h`](../include/knob_pins.h)
   Shared multiplexer pin assignments.
 
 - [`include/lv_conf.h`](../include/lv_conf.h)
@@ -405,17 +404,17 @@ Key helper functions:
 The LVGL input callback is `my_touchpad_read`. It translates a raw `TS_Point` into:
 
 - `LV_INDEV_STATE_PRESSED` or `LV_INDEV_STATE_RELEASED`
-- screen coordinates in the `320x240` display space
+- screen coordinates in the `480x320` display space
 
 The same touch information is also forwarded to `input_test_page.updateTouch(...)` so the diagnostic page can display raw and mapped touch data.
 
 ### 7.2 Knobs and OK button in `ControlInput`
 
-[`src/control_input.cpp`](../src/control_input.cpp) reads the five knobs and joystick push button through a `74HC4067` multiplexer.
+[`src/control_input.cpp`](../src/control_input.cpp) reads the five knobs directly from Teensy analog pins `14/15/16/17/22`.
 
 Important implementation details:
 
-- select pins come from [`include/mux_pins.h`](../include/mux_pins.h)
+- knob pins come from [`include/knob_pins.h`](../include/knob_pins.h)
 - ADC resolution is set to 12 bits
 - each channel is oversampled and averaged
 - a smoothing filter reduces jitter
@@ -438,7 +437,7 @@ This mapping is defined by `ControlInput::kPotChannels` and `kButtonChannel`.
 #### Important methods
 
 - `begin`
-  Configures mux pins and captures initial pot values.
+  Configures the knob analog pins and captures initial pot values.
 
 - `update`
   Reads all controls, filters them, and records pending changes.
@@ -470,7 +469,7 @@ Important details:
 
 - it can start a short audio self-test by calling `synth.startSelfTest()`
 - it resets activity ranges when requested
-- it scans mux channels periodically with a timing budget
+- it samples the knob pins and probe pins periodically
 - it samples a set of direct analog pins separately
 
 #### Important caution
@@ -1284,8 +1283,8 @@ When documenting or modifying current behavior, prefer `src/` and `include/`.
 
 ### Hardware input
 
-- [`include/mux_pins.h`](../include/mux_pins.h)
-  Shared mux pin numbers.
+- [`include/knob_pins.h`](../include/knob_pins.h)
+  Shared knob pin numbers.
 
 - [`include/control_input.h`](../include/control_input.h)
   Public API for normal control scanning.

@@ -29,7 +29,7 @@ The current firmware is a playable mono synth instrument with:
 - effect editing with page-dependent controls
 - output volume, tuning, and clock-source (internal / external) selection from the settings page
 - Persian scale support through alternate tunings
-- joystick push button used as `OK / Confirm`
+- touch screen used for navigation and `OK / Confirm` actions
 
 ## Persian / Iranian Tunings
 
@@ -53,7 +53,7 @@ The current tuning list includes:
 
 Yottasynth is organized as one compact panel split into pages. The touch screen is used to switch pages and trigger actions, while the five physical knobs always control the five parameters shown on screen for the current page.
 
-In normal use, a MIDI controller feeds notes into the synth engine through USB host MIDI. You shape the sound on the synth pages, switch to `ARP` for rhythmic note patterns, use `SEQ` for step programming and live record, and adjust global volume or tuning in `SET`. When a destructive action needs confirmation, the joystick push button acts as `OK`.
+In normal use, a MIDI controller feeds notes into the synth engine through USB host MIDI. You shape the sound on the synth pages, switch to `ARP` for rhythmic note patterns, use `SEQ` for step programming and live record, and adjust global volume or tuning in `SET`. When a destructive action needs confirmation, a second tap on the armed button acts as `OK`.
 
 The transport (sequencer and arpeggiator) normally runs on its own internal BPM. Set `SYNC` to `EXT` on the `SET` page to slave it to an external MIDI clock over USB instead. Two USB paths are supported without any hardware change:
 

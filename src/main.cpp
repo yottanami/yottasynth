@@ -18,8 +18,8 @@ extern "C" void _reboot_Teensyduino_(void);
 namespace {
 constexpr uint8_t kTouchCsPin = 5;
 constexpr uint8_t kTouchIrqPin = 4;
-constexpr uint16_t kDisplayWidth = 320;
-constexpr uint16_t kDisplayHeight = 240;
+constexpr uint16_t kDisplayWidth = 480;
+constexpr uint16_t kDisplayHeight = 320;
 constexpr int16_t kTouchRawXMin = 540;
 constexpr int16_t kTouchRawXMax = 3756;
 constexpr int16_t kTouchRawYMin = 400;
@@ -264,14 +264,14 @@ void loop() {
   const Mode mode = Settings::getInstance()->getMode();
 
   if (mode == Mode::INPUT_TEST) {
-    input_test_page.setMuxEnabled(true);
+    input_test_page.setProbeEnabled(true);
     if (!input_test_started) {
       input_test_page.begin();
       input_test_started = true;
     }
     input_test_page.loop();
   } else {
-    input_test_page.setMuxEnabled(false);
+    input_test_page.setProbeEnabled(false);
     input_test_started = false;
 
     control_input.update();
@@ -280,10 +280,6 @@ void loop() {
       if (control_input.consumePotChange(index, value)) {
         main_menu.handlePotChange(index, value);
       }
-    }
-
-    if (control_input.consumeOkPress()) {
-      main_menu.handleOkPress();
     }
 
     play_mode.loop();

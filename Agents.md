@@ -24,7 +24,7 @@ That means:
 
 - the touch screen is the main navigation surface
 - the five pots are always active and remap to the current page
-- the joystick push button is reserved for confirm-style actions, not general navigation
+- confirm-style actions use an explicit second tap on the same button (no physical confirm button)
 - the UI should feel like one instrument panel split into focused pages, not like a generic settings menu
 
 The current firmware already follows that model. This document should stay focused on the actual panel structure and visual interaction model.
@@ -35,41 +35,40 @@ The current implementation runs on:
 
 - `Teensy 4.1`
 - `SGTL5000` audio codec
-- `320x240` SPI TFT touch display
-- `74HC4067` mux for panel controls
+- `480x320` SPI TFT touch display (4.0" LCDwiki MSP4031, `ILI9488` + `XPT2046` touch)
+- five panel pots wired directly to Teensy analog pins (no mux)
 
 Keep these platform constraints in mind for future work:
 
 - RAM and CPU limits are those of a Teensy 4.1 class embedded target
-- the UI is built for a fixed `320x240` touch screen
-- the control surface is five knobs plus one joystick push button
+- the UI is built for a fixed `480x320` touch screen
+- the control surface is five knobs plus the touch screen
 - hardware-facing details beyond the panel map live in the codebase and board files, not only in this document
 
 ## Current Hardware Control Map
 
 Source of truth note:
 
-- the active mux and panel mapping in code is the valid mapping
-- board design documents may still reflect an older mux wiring layout
+- the pin mapping in code (`include/knob_pins.h`) matches the current PCB (`etc/board/`)
 - if there is any conflict, follow the current firmware implementation
-- end-user docs should not include mux-channel or wiring details; keep those details here and in the firmware source
+- end-user docs should not include pin or wiring details; keep those details here and in the firmware source
 
-### Mux and panel controls
+### Panel controls
 
-- mux select pins: `14 / 15 / 16 / 17`
-- mux signal pin: `22`
-- knob 1: `C2`
-- knob 2: `C4`
-- knob 3: `C1`
-- knob 4: `C5`
-- knob 5: `C0`
-- joystick push button: `C7`
+Knobs connect straight to Teensy analog pins (headers `RV1..RV5` on the PCB):
 
-Joystick axes are intentionally unused in the current implementation.
+- knob 1: pin `14` (`A0`)
+- knob 2: pin `15` (`A1`)
+- knob 3: pin `16` (`A2`)
+- knob 4: pin `17` (`A3`)
+- knob 5: pin `22` (`A8`)
+
+The old joystick and `74HC4067` mux were removed from the board; confirm-style
+actions now use the touch screen (second tap on the armed button).
 
 ## Interface Layout
 
-The implemented UI is a fixed three-band layout on the `320x240` screen:
+The implemented UI is a fixed three-band layout on the `480x320` screen:
 
 - top status bar: `46px`
 - main content panel: `150px`
@@ -296,8 +295,8 @@ Interaction rules:
 - first tap on a step selects it
 - tapping the selected step toggles it active/inactive
 - `BANK` switches between steps `1-8` and `9-16`
-- `CLEAR` enters a confirmation state
-- joystick `OK` confirms the clear operation
+- `CLEAR` enters a confirmation state (`TAP AGAIN`)
+- tapping `CLEAR` a second time confirms; leaving the page cancels
 
 This is the most important special-case panel in the current UI. It should stay tactile and obvious rather than becoming list-driven.
 
@@ -337,7 +336,7 @@ The five knobs are active in normal runtime.
 
 Current behavior:
 
-- values are read through the mux
+- values are read directly from dedicated analog pins
 - analog reads use smoothing
 - changes are only emitted after a movement threshold
 - each page maps the same physical knob order to a different parameter set
@@ -359,13 +358,13 @@ This means the touch UI is designed for deliberate finger interaction, not stylu
 
 ### Confirm model
 
-The joystick push button is currently dedicated to `OK / Confirm`.
+Destructive actions arm a confirmation state on the same button.
 
 Implemented use today:
 
-- confirms sequencer clear after the UI shows `WAIT OK`
+- `CLEAR` on the sequencer page arms and shows `TAP AGAIN`; a second tap confirms, leaving the page cancels
 
-Future destructive actions should reuse this pattern instead of adding tiny touch-only confirmation dialogs.
+Future destructive actions should reuse this arm-then-confirm pattern instead of adding tiny touch-only confirmation dialogs.
 
 ## Practical UI Rules
 
@@ -377,7 +376,7 @@ Use these rules when extending the instrument:
 - keep touch targets large enough for finger use
 - use touch for selection and discrete actions
 - use pots for continuous editing
-- reserve the joystick push button for confirmations and safe commits
+- use the arm-then-confirm (second tap) pattern for destructive commits
 - keep color accents page-specific and stable
 - treat the sequencer as a hands-on grid, not a text editor
 

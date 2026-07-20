@@ -1,40 +1,33 @@
 #include "control_input.h"
 
-#include "mux_pins.h"
+#include "knob_pins.h"
 
 namespace {
 constexpr uint16_t kAnalogMax = 4095;
 constexpr float kSmoothing = 0.20f;
 constexpr float kPotThreshold = 0.015f;
-constexpr uint16_t kButtonThreshold = 1800;
-constexpr unsigned long kButtonDebounceMs = 25;
 }
 
 void ControlInput::begin() {
-  for (const uint8_t pin : MuxPins::kSelectPins) {
-    pinMode(pin, OUTPUT);
-    digitalWrite(pin, LOW);
+  for (const uint8_t pin : KnobPins::kKnobPins) {
+    pinMode(pin, INPUT_DISABLE);  // pure analog input, no digital keeper
   }
 
-  pinMode(MuxPins::kSignal, INPUT);
   analogReadResolution(12);
   analogReadAveraging(8);
 
   for (uint8_t index = 0; index < kPotCount; ++index) {
-    const uint16_t raw = readChannel(kPotChannels[index]);
+    const uint16_t raw = readKnob(KnobPins::kKnobPins[index]);
     raw_values_[index] = raw;
     const float normalized = static_cast<float>(raw) / static_cast<float>(kAnalogMax);
     filtered_values_[index] = normalized;
     pending_values_[index] = normalized;
   }
-
-  raw_button_value_ = readChannel(kButtonChannel);
-  button_pressed_ = raw_button_value_ < kButtonThreshold;
 }
 
 void ControlInput::update() {
   for (uint8_t index = 0; index < kPotCount; ++index) {
-    const uint16_t raw = readChannel(kPotChannels[index]);
+    const uint16_t raw = readKnob(KnobPins::kKnobPins[index]);
     raw_values_[index] = raw;
 
     const float normalized = static_cast<float>(raw) / static_cast<float>(kAnalogMax);
@@ -46,18 +39,6 @@ void ControlInput::update() {
       pending_changes_[index] = true;
     }
   }
-
-  raw_button_value_ = readChannel(kButtonChannel);
-  const bool sampled_pressed = raw_button_value_ < kButtonThreshold;
-  const unsigned long now = millis();
-
-  if (sampled_pressed != button_pressed_ && (now - last_button_change_ms_) >= kButtonDebounceMs) {
-    button_pressed_ = sampled_pressed;
-    last_button_change_ms_ = now;
-    if (button_pressed_) {
-      pending_ok_press_ = true;
-    }
-  }
 }
 
 bool ControlInput::consumePotChange(uint8_t index, float &value) {
@@ -67,15 +48,6 @@ bool ControlInput::consumePotChange(uint8_t index, float &value) {
 
   pending_changes_[index] = false;
   value = pending_values_[index];
-  return true;
-}
-
-bool ControlInput::consumeOkPress() {
-  if (!pending_ok_press_) {
-    return false;
-  }
-
-  pending_ok_press_ = false;
   return true;
 }
 
@@ -93,29 +65,12 @@ uint16_t ControlInput::rawChannelValue(uint8_t index) const {
   return raw_values_[index];
 }
 
-uint16_t ControlInput::rawButtonValue() const {
-  return raw_button_value_;
-}
-
-bool ControlInput::buttonPressed() const {
-  return button_pressed_;
-}
-
-void ControlInput::selectChannel(uint8_t channel) const {
-  for (uint8_t bit = 0; bit < 4; ++bit) {
-    digitalWrite(MuxPins::kSelectPins[bit], bitRead(channel, bit));
-  }
-}
-
-uint16_t ControlInput::readChannel(uint8_t channel) const {
-  selectChannel(channel);
-  delayMicroseconds(50);
-  analogRead(MuxPins::kSignal);
-  delayMicroseconds(8);
+uint16_t ControlInput::readKnob(uint8_t pin) const {
+  analogRead(pin);  // discard first sample after the ADC switches channel
 
   uint32_t total = 0;
   for (uint8_t sample = 0; sample < 4; ++sample) {
-    total += analogRead(MuxPins::kSignal);
+    total += analogRead(pin);
   }
 
   return static_cast<uint16_t>(total / 4U);
